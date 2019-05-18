@@ -14,6 +14,7 @@ import org.bukkit.plugin.Plugin;
 import org.bukkit.scoreboard.Team;
 import org.bukkitutils.io.DataFile;
 import org.bukkitutils.io.Message;
+import org.bukkitutils.io.MessageException;
 import org.bukkitutils.io.Translate;
 
 public final class Notification {
@@ -42,21 +43,14 @@ public final class Notification {
 						Plugin pl = Bukkit.getPluginManager().getPlugin(config.getString(player.getUniqueId().toString() + "." + key + ".plugin"));
 						if (plugin.equals(pl)) {
 							if (config.contains(player.getUniqueId().toString() + "." + key + ".path")) {
-								Message message = new Message() {
-									public BukkitPlugin getPlugin() {
-										return plugin;
-									}
-									public String getPath() {
-										return config.getString(player.getUniqueId().toString() + "." + key + ".path");
-									}
-								};
-								
 								String[] args;
 								if (config.contains(player.getUniqueId().toString() + "." + key + ".args")) {
 									args = config.getStringList(player.getUniqueId().toString() + "." + key + ".args").toArray(new String[0]);
 								} else args = new String[0];
 								
-								player.sendMessage(Translate.getPluginMessage(player, message, args));
+								try {
+									player.sendMessage(Translate.getPluginMessage(player, new Message(plugin, config.getString(player.getUniqueId().toString() + "." + key + ".path")), args));
+								} catch (MessageException ex) {}
 								
 								config.set(player.getUniqueId().toString() + "." + key, null);
 								if (config.getConfigurationSection(player.getUniqueId().toString()).getKeys(false).isEmpty()) {

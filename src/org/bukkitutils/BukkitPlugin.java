@@ -1,9 +1,16 @@
 package org.bukkitutils;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -14,31 +21,45 @@ import org.bukkitutils.command.CommandAPI;
 
 public class BukkitPlugin extends JavaPlugin implements Listener {
 	
-	private final YamlConfiguration pluginFile;
-	private final YamlConfiguration translateFile;
+	private final YamlConfiguration pluginConfig;
+	private final Map<String, Properties> translates = new HashMap<String, Properties>();
 	
 	public BukkitPlugin() {
-		pluginFile = YamlConfiguration.loadConfiguration(new InputStreamReader(this.getResource("plugin.yml")));
-		YamlConfiguration translate;
+		pluginConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(this.getResource("plugin.yml")));
+		
 		try {
-			translate = YamlConfiguration.loadConfiguration(new InputStreamReader(this.getResource("translate.yml")));
-		} catch (Exception ex) {
-			translate = null;
+			JarFile jarFile = new JarFile(getFile());
+			Enumeration<JarEntry> entries = jarFile.entries();
+			while (entries.hasMoreElements()) {
+				JarEntry entry = entries.nextElement();
+				if (entry.getName().startsWith("translate"))
+					try {
+						Properties properties = new Properties();
+						properties.load(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(entry.getName())));
+						String[] files = entry.getName().split("/");
+						translates.put(files[files.length - 1].split("\\.")[0], properties);
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
+			}
+			jarFile.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
-		translateFile = translate;
+		
 		CommandAPI.initialize();
 	}
 	
-	public File getJarFile() {
-		return getFile();
+	public File getFile() {
+		return super.getFile();
 	}
 	
 	public YamlConfiguration getPluginConfig() {
-		return pluginFile;
+		return pluginConfig;
 	}
 	
-	public YamlConfiguration getTranslateConfig() {
-		return translateFile;
+	public Map<String, Properties> getTranslates() {
+		return translates;
 	}
 	
 	@Override
