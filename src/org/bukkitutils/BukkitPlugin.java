@@ -3,6 +3,7 @@ package org.bukkitutils;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
@@ -25,7 +26,7 @@ public class BukkitPlugin extends JavaPlugin implements Listener {
 	private final Map<String, Properties> translates = new HashMap<String, Properties>();
 	
 	public BukkitPlugin() {
-		pluginConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(this.getResource("plugin.yml")));
+		pluginConfig = YamlConfiguration.loadConfiguration(new InputStreamReader(this.getResource("plugin.yml"), Charset.forName("UTF-8")));
 		
 		try {
 			JarFile jarFile = new JarFile(getFile());
@@ -35,7 +36,7 @@ public class BukkitPlugin extends JavaPlugin implements Listener {
 				if (entry.getName().startsWith("translate"))
 					try {
 						Properties properties = new Properties();
-						properties.load(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(entry.getName())));
+						properties.load(new InputStreamReader(this.getClass().getClassLoader().getResourceAsStream(entry.getName()), Charset.forName("UTF-8")));
 						String[] files = entry.getName().split("/");
 						translates.put(files[files.length - 1].split("\\.")[0], properties);
 					} catch (IOException e) {
