@@ -9,7 +9,7 @@ public class Message {
 	
 	public Message(BukkitPlugin plugin, String path) {
 		this.plugin = plugin;
-		this.path = path;
+		this.path = path.toLowerCase();
 	}
 	
 	public BukkitPlugin getPlugin() {

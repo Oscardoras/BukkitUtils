@@ -11,7 +11,8 @@ public final class Translate {
 	private Translate() {}
 	
 	
-	public static String getMessage(String language, String path, Map<String, Properties> translates) {
+	protected static String getMessage(String language, String path, Map<String, Properties> translates) {
+		path = path.toLowerCase();
 		if (translates.containsKey(language)) {
 			Properties properties = translates.get(language);
 			if (properties.containsKey(path)) return properties.getProperty(path);
@@ -27,7 +28,7 @@ public final class Translate {
 		throw new MessageException(path);
 	}
 	
-	public static String getPluginMessage(String language, Message message, String... args) {
+	protected static String getPluginMessage(String language, Message message, String... args) {
 		String msg = getMessage(language, message.getPath(), message.getPlugin().getTranslates());
 		for (String arg : args) msg = msg.replaceFirst("%arg%", arg);
 		return msg;
@@ -37,7 +38,7 @@ public final class Translate {
 		return getPluginMessage(getLanguage(sender), message, args);
 	}
 	
-	public static String getLanguage(CommandSender sender) {
+	protected static String getLanguage(CommandSender sender) {
 		if (sender instanceof ProxiedCommandSender) sender = ((ProxiedCommandSender) sender).getCaller();
 		if (sender instanceof Player) return ((Player) sender).getLocale().split("_")[0];
 		else return "en";
