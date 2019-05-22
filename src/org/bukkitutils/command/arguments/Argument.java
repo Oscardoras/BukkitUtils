@@ -1,6 +1,6 @@
 package org.bukkitutils.command.arguments;
 
-import org.bukkitutils.command.CommandPermission;
+import org.bukkit.permissions.Permission;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 
@@ -22,8 +22,8 @@ public interface Argument {
 	 */
 	public boolean isSimple();
 	
-	public <T extends Argument> T withPermission(CommandPermission permission);
+	public <T extends Argument> T withPermission(Permission permission);
 	
-	public CommandPermission getArgumentPermission();
+	public Permission getArgumentPermission();
 		
 }

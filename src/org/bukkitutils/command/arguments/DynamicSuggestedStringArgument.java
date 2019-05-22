@@ -1,7 +1,7 @@
 package org.bukkitutils.command.arguments;
 
 import org.bukkit.command.CommandSender;
-import org.bukkitutils.command.CommandPermission;
+import org.bukkit.permissions.Permission;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -64,16 +64,16 @@ public class DynamicSuggestedStringArgument implements Argument {
 		return suggestionsWithCS;
 	}
 	
-	private CommandPermission permission = CommandPermission.NONE;
+	private Permission permission = null;
 	
 	@Override
-	public DynamicSuggestedStringArgument withPermission(CommandPermission permission) {
+	public DynamicSuggestedStringArgument withPermission(Permission permission) {
 		this.permission = permission;
 		return this;
 	}
 
 	@Override
-	public CommandPermission getArgumentPermission() {
+	public Permission getArgumentPermission() {
 		return permission;
 	}
 }

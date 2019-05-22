@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
@@ -24,7 +23,6 @@ import org.bukkit.World;
 import org.bukkit.command.BlockCommandSender;
 import org.bukkit.command.CommandSender;
 import org.bukkit.command.ProxiedCommandSender;
-import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
@@ -93,8 +91,6 @@ public final class SemiReflector {
 		}
 		
 	}
-		
-	private TreeMap<String, CommandPermission> permissionsToFix;
 
 	//Cache maps
 	private static Map<String, Class<?>> NMSClasses;
@@ -128,7 +124,6 @@ public final class SemiReflector {
 			OBCClasses = new HashMap<>();
 			methods = new HashMap<>();
 			fields = new HashMap<>();
-			permissionsToFix = new TreeMap<>();
 			
 			this.cDispatcher = getField(getNMSClass("MinecraftServer"), "commandDispatcher").get(server);
 						
@@ -433,112 +428,24 @@ public final class SemiReflector {
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
-	// SECTION: Permissions                                                                             //
-	//////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	private Predicate generatePermissions(String commandName, CommandPermission permission) {
-		
-		//If we've already registered a permission, set it to the "parent" permission.
-		/*
-		 * This permission generation setup ONLY works iff:
-		 * - You register the parent permission node FIRST.
-		 * - Example:
-		 * 	 /mycmd			- permission node my.perm
-		 *   /mycmd <arg>	- permission node my.perm.other
-		 *   
-		 * the my.perm.other permission node is revoked for the COMMAND REGISTRATION, however:
-		 * - The permission node IS REGISTERED.
-		 * - The permission node, if used for an argument (as in this case), will be used for
-		 * 	 suggestions for said argument
-		 */
-		if(permissionsToFix.containsKey(commandName.toLowerCase())) {
-			if(!permissionsToFix.get(commandName.toLowerCase()).equals(permission)) {
-				permission = permissionsToFix.get(commandName.toLowerCase());
-			}
-//			if(!permissionsToFix.get(commandName.toLowerCase()).equals(permission)) {
-//				throw new ConflictingPermissionsException(commandName, permissionsToFix.get(commandName.toLowerCase()), permission);
-//			}
-		} else {
-			//Add permission to a list to fix conflicts with minecraft:permissions
-			permissionsToFix.put(commandName.toLowerCase(), permission);
-		}
-		
-		CommandPermission finalPermission = permission;
-		
-		//Register it to the Bukkit permissions registry
-		if(finalPermission.getPermission() != null) {
-			try {
-				Bukkit.getPluginManager().addPermission(new Permission(finalPermission.getPermission()));
-			} catch(IllegalArgumentException e) {}
-		}
-		
-		return (clw) -> {
-			return permissionCheck(getCommandSender(clw), finalPermission);
-        };
-	}
-	
-	//Checks if a CommandSender has permission permission from CommandPermission permission
-	private boolean permissionCheck(CommandSender sender, CommandPermission permission) {
-		if(permission.equals(CommandPermission.NONE)) {
-			return true;
-		} else if(permission.equals(CommandPermission.OP)) {
-			return sender.isOp();
-		} else {
-			return sender.hasPermission(permission.getPermission());
-		}
-	}
-	
-	protected void fixPermissions() {
-		try {
-			
-			SimpleCommandMap map = (SimpleCommandMap) getMethod(getOBCClass("CraftServer"), "getCommandMap").invoke(Bukkit.getServer());
-			Field f = getField(SimpleCommandMap.class, "knownCommands");
-			Map<String, org.bukkit.command.Command> knownCommands = (Map<String, org.bukkit.command.Command>) f.get(map);
-			
-			Class vcw = getOBCClass("command.VanillaCommandWrapper");
-			
-			permissionsToFix.forEach((cmdName, perm) -> {
-				
-				if(perm.equals(CommandPermission.NONE)) {
-					/*
-					 * org.bukkit.command.Command.testPermissionSilent() ->
-					 * if ((permission == null) || (permission.length() == 0)) {
-				     *     return true;
-				     * }
-					 */
-					if(vcw.isInstance(knownCommands.get(cmdName))) {
-						knownCommands.get(cmdName).setPermission("");
-					}
-					if(vcw.isInstance(knownCommands.get("minecraft:" + cmdName))) {
-						knownCommands.get(cmdName).setPermission("");
-					}
-				} else {
-					if(perm.getPermission() != null) {
-						if(vcw.isInstance(knownCommands.get(cmdName))) {
-							knownCommands.get(cmdName).setPermission(perm.getPermission());
-						}
-						if(vcw.isInstance(knownCommands.get("minecraft:" + cmdName))) {
-							knownCommands.get(cmdName).setPermission(perm.getPermission());
-						}
-					} else {
-					}
-				}
-				
-				
-			});
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | ClassNotFoundException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// SECTION: Registration                                                                            //
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	//Builds our NMS command using the given arguments for this method, then registers it
-	protected void register(String commandName, CommandPermission permissions, CommandSenderType senderType, String[] aliases, final LinkedHashMap<String, Argument> args, CommandExecutor executor) throws Exception {
+	protected void register(String commandName, Permission permissions, CommandSenderType senderType, String[] aliases, final LinkedHashMap<String, Argument> args, CommandExecutor executor) throws Exception {
 		Command command = generateCommand(commandName, args, senderType, executor);
-		Predicate permission = generatePermissions(commandName, permissions);
+		Predicate permission;
+		if (permissions == null) {
+			permission = (clw) -> {
+				return true;
+	        };
+		} else {
+        	final Permission finalPermission = permissions;
+    		
+        	permission = (clw) -> {
+    			return getCommandSender(clw).hasPermission(finalPermission);
+            };
+        }
 		//Predicate permission = (a) -> {return true;};
 		
 		/*
@@ -621,7 +528,7 @@ public final class SemiReflector {
 		for Str str : aliases:
 			register str (redirect to) -> whatever we're about to register right now?
 		*/
-	}	
+	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	// SECTION: SuggestionProviders                                                                     //
@@ -658,21 +565,21 @@ public final class SemiReflector {
 		return LiteralArgumentBuilder.literal(commandName);
 	}
 	
-	private LiteralArgumentBuilder<?> getLiteralArgumentBuilderArgument(String commandName, CommandPermission permission) {
+	private LiteralArgumentBuilder<?> getLiteralArgumentBuilderArgument(String commandName, Permission permission) {
 		return LiteralArgumentBuilder.literal(commandName).requires(clw -> {
-			return permissionCheck(getCommandSender(clw), permission);
+			return permission == null || getCommandSender(clw).hasPermission(permission);
 		});
 	}
 	
 	//Gets a RequiredArgumentBuilder for an argument
-	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilder(String argumentName, ArgumentType<T> type, CommandPermission permission) {
+	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilder(String argumentName, ArgumentType<T> type, Permission permission) {
 		return RequiredArgumentBuilder.argument(argumentName, type).requires(clw -> {
-			return permissionCheck(getCommandSender(clw), permission);
+			return permission == null || getCommandSender(clw).hasPermission(permission);
 		});
 	}
 	
 	//Gets a RequiredArgumentBuilder for a DynamicSuggestedStringArgument
-	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilder(String argumentName, DynamicSuggestedStringArgument type, CommandPermission permission) {
+	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilder(String argumentName, DynamicSuggestedStringArgument type, Permission permission) {
 		
 		SuggestionProvider provider = null;
 		
@@ -693,14 +600,14 @@ public final class SemiReflector {
 	}
 	
 	//Gets a RequiredArgumentBuilder for an argument, given a SuggestionProvider
-	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilder(String argumentName, ArgumentType<T> type, CommandPermission permission, SuggestionProvider provider){
+	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilder(String argumentName, ArgumentType<T> type, Permission permission, SuggestionProvider provider){
 		return RequiredArgumentBuilder.argument(argumentName, type).requires(clw -> {
-			return permissionCheck(getCommandSender(clw), permission);
+			return permission == null || getCommandSender(clw).hasPermission(permission);
 		}).suggests(provider);
 	}
 	
 	//Gets a RequiredArgumentBuilder for an argument, given that said argument uses OverrideableSuggestions
-	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilderWithOverride(String argumentName, Argument type, CommandPermission permission){
+	private <T> RequiredArgumentBuilder<?, T> getRequiredArgumentBuilderWithOverride(String argumentName, Argument type, Permission permission){
 		String[] newSuggestions = ((OverrideableSuggestions) type).getOverriddenSuggestions();
 		if(newSuggestions == null || newSuggestions.length == 0) {
 			return getRequiredArgumentBuilder(argumentName, type.getRawType(), permission);
@@ -712,7 +619,7 @@ public final class SemiReflector {
 			};
 			
 			return RequiredArgumentBuilder.argument(argumentName, type.getRawType()).requires(clw -> {
-				return permissionCheck(getCommandSender(clw), permission);
+				return permission == null || getCommandSender(clw).hasPermission(permission);
 			}).suggests(provider);
 		}
 		

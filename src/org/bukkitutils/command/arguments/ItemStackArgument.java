@@ -1,7 +1,7 @@
 package org.bukkitutils.command.arguments;
 
 import org.bukkit.inventory.ItemStack;
-import org.bukkitutils.command.CommandPermission;
+import org.bukkit.permissions.Permission;
 import org.bukkitutils.command.SemiReflector;
 
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -46,16 +46,16 @@ public class ItemStackArgument implements Argument, OverrideableSuggestions {
 		return suggestions;
 	}
 	
-	private CommandPermission permission = CommandPermission.NONE;
+	private Permission permission = null;
 	
 	@Override
-	public ItemStackArgument withPermission(CommandPermission permission) {
+	public ItemStackArgument withPermission(Permission permission) {
 		this.permission = permission;
 		return this;
 	}
 
 	@Override
-	public CommandPermission getArgumentPermission() {
+	public Permission getArgumentPermission() {
 		return permission;
 	}
 }

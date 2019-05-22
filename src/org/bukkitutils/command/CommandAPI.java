@@ -2,6 +2,7 @@ package org.bukkitutils.command;
 
 import java.util.LinkedHashMap;
 
+import org.bukkit.permissions.Permission;
 import org.bukkitutils.command.arguments.Argument;
 import org.bukkitutils.command.arguments.GreedyStringArgument;
 import org.bukkitutils.command.exceptions.GreedyStringException;
@@ -38,18 +39,18 @@ public final class CommandAPI {
 	
 	
 	public static void register(String commandName, LinkedHashMap<String, Argument> args, CommandExecutor executor, String... aliases) {
-		register(commandName, args, CommandPermission.NONE, CommandSenderType.ALL, executor, aliases);
+		register(commandName, args, null, CommandSenderType.ALL, executor, aliases);
 	}
 	
-	public static void register(String commandName, LinkedHashMap<String, Argument> args, CommandPermission permissions, CommandExecutor executor, String... aliases) {
+	public static void register(String commandName, LinkedHashMap<String, Argument> args, Permission permissions, CommandExecutor executor, String... aliases) {
 		register(commandName, args, permissions, CommandSenderType.ALL, executor, aliases);
 	}
 	
 	public static void register(String commandName, LinkedHashMap<String, Argument> args, CommandSenderType senderType, CommandExecutor executor, String... aliases) {
-		register(commandName, args, CommandPermission.NONE, senderType, executor, aliases);
+		register(commandName, args, null, senderType, executor, aliases);
 	}
 	
-	public static void register(String commandName, LinkedHashMap<String, Argument> args, CommandPermission permissions, CommandSenderType senderType, CommandExecutor executor, String... aliases) {
+	public static void register(String commandName, LinkedHashMap<String, Argument> args, Permission permissions, CommandSenderType senderType, CommandExecutor executor, String... aliases) {
 		try {
 			
 			//Sanitize commandNames

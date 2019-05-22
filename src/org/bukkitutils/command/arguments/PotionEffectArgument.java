@@ -1,7 +1,7 @@
 package org.bukkitutils.command.arguments;
 
+import org.bukkit.permissions.Permission;
 import org.bukkit.potion.PotionEffectType;
-import org.bukkitutils.command.CommandPermission;
 import org.bukkitutils.command.SemiReflector;
 
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -46,16 +46,16 @@ public class PotionEffectArgument implements Argument, OverrideableSuggestions {
 		return suggestions;
 	}
 	
-	private CommandPermission permission = CommandPermission.NONE;
+	private Permission permission = null;
 	
 	@Override
-	public PotionEffectArgument withPermission(CommandPermission permission) {
+	public PotionEffectArgument withPermission(Permission permission) {
 		this.permission = permission;
 		return this;
 	}
 
 	@Override
-	public CommandPermission getArgumentPermission() {
+	public Permission getArgumentPermission() {
 		return permission;
 	}
 }

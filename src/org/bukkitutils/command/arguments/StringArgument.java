@@ -1,6 +1,6 @@
 package org.bukkitutils.command.arguments;
 
-import org.bukkitutils.command.CommandPermission;
+import org.bukkit.permissions.Permission;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -45,16 +45,16 @@ public class StringArgument implements Argument, OverrideableSuggestions {
 		return suggestions;
 	}
 	
-	private CommandPermission permission = CommandPermission.NONE;
+	private Permission permission = null;
 	
 	@Override
-	public StringArgument withPermission(CommandPermission permission) {
+	public StringArgument withPermission(Permission permission) {
 		this.permission = permission;
 		return this;
 	}
 
 	@Override
-	public CommandPermission getArgumentPermission() {
+	public Permission getArgumentPermission() {
 		return permission;
 	}
 }
