@@ -1,0 +1,22 @@
+package org.bukkitutils.command.v1_14_2_V1.arguments;
+
+import org.bukkit.Location;
+import org.bukkit.command.CommandSender;
+
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.context.CommandContext;
+
+/** Represents a greedy string argument for a Mojang Brigadier command */
+public class GreedyStringArgument extends Argument<String> {
+	
+	/** Represents a greedy string argument for a Mojang Brigadier command */
+	public GreedyStringArgument() {
+		super(StringArgumentType.greedyString());
+	}
+	
+	@Override
+	public String getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+		return context.getArgument(key, String.class);
+	}
+	
+}

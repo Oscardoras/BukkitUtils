@@ -14,10 +14,13 @@ import java.util.TimerTask;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 
+/** Represents a file containing datas up to date */
 public class DataFile {
 	
-	private final static List<FileCache<YamlConfiguration>> yamlConfigurationFiles = reloadYamlConfiguration();
-	private static List<FileCache<YamlConfiguration>> reloadYamlConfiguration() {
+	private final static List<FileCache<YamlConfiguration>> yamlConfigurationFiles = new ArrayList<FileCache<YamlConfiguration>>();
+	private final static List<FileCache<Properties>> propertiesFiles = new ArrayList<FileCache<Properties>>();
+	
+	static {
 		new Timer().schedule(new TimerTask() {
 			public void run() {
 				try {
@@ -42,11 +45,7 @@ public class DataFile {
 				}
 			}
 		}, 5000l, 5000l);
-		return new ArrayList<FileCache<YamlConfiguration>>();
-	}
-	
-	private final static List<FileCache<Properties>> propertiesFiles = reloadProperties();
-	private static List<FileCache<Properties>> reloadProperties() {
+		
 		new Timer().schedule(new TimerTask() {
 			public void run() {
 				try {
@@ -71,19 +70,31 @@ public class DataFile {
 				}
 			}
 		}, 5000l, 5000l);
-		return new ArrayList<FileCache<Properties>>();
 	}
 	
-	protected File file;
 	
+	protected final File file;
+	
+	/**
+	 * Represents a file containing datas
+	 * @param path the path of the file
+	 */
 	public DataFile(String path) {
 		this.file = new File(path);
 	}
 	
+	/**
+	 * Represents a file containing datas
+	 * @param file the file
+	 */
 	public DataFile(File file) {
 		this.file = file;
 	}
 	
+	/**
+	 * Gets the file
+	 * @return the file
+	 */
 	public File getFile() {
 		try {
 			file.setReadable(true);
@@ -101,6 +112,10 @@ public class DataFile {
 		return null;
 	}
 	
+	/**
+	 * Gets the config for this file
+	 * @return the YamlConfiguration object
+	 */
 	@SuppressWarnings("unlikely-arg-type")
 	public YamlConfiguration getYML() {
 		try {
@@ -122,6 +137,10 @@ public class DataFile {
 		return null;
 	}
 	
+	/**
+	 * Gets the properties for this file
+	 * @return the Properties object
+	 */
 	@SuppressWarnings("unlikely-arg-type")
 	public Properties getProperties() {
 		try {
@@ -144,6 +163,7 @@ public class DataFile {
 		return null;
 	}
 	
+	/** Saves the file */
 	@SuppressWarnings("unlikely-arg-type")
 	public void save() {
 		try {

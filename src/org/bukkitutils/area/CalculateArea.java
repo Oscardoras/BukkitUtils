@@ -2,11 +2,17 @@ package org.bukkitutils.area;
 
 import org.bukkit.Location;
 
+/** A tool to calculate an area coordinates */
 public class CalculateArea {
 	
-	protected Location positive;
-	protected Location negative;
+	protected final Location positive;
+	protected final Location negative;
 	
+	/**
+	 * A tool to calculate an area coordinates
+	 * @param positive the first location object
+	 * @param negative the second location object
+	 */
 	public CalculateArea(Location positive, Location negative) {
 		this.positive = new Location(positive.getWorld(), 0, 0, 0);
 		this.negative = new Location(positive.getWorld(), 0, 0, 0);
@@ -33,11 +39,20 @@ public class CalculateArea {
 		}
 	}
 	
+	/**
+	 * Gets the positive location
+	 * @return the positive location
+	 */
 	public Location getPositive() {
 		return positive;
 	}
 	
+	/**
+	 * Gets the negative location
+	 * @return the negative location
+	 */
 	public Location getNegative() {
 		return negative;
 	}
+	
 }
