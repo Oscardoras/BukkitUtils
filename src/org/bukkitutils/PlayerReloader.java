@@ -54,6 +54,7 @@ public final class PlayerReloader implements Listener {
 	 * Registers a new player reloader
 	 * @param plugin the plugin
 	 * @param runable the PlayerReloaderRunnable to run when the player is reloaded is performed
+	 * @param ticks the clock delay. Set 0 to disable the clock
 	 */
 	public static PlayerReloaderRunnable register(Plugin plugin, PlayerReloaderRunnable runnable, long ticks) {
     	new PlayerReloader(plugin, runnable, ticks);
