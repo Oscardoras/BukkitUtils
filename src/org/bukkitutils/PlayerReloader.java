@@ -43,7 +43,7 @@ public final class PlayerReloader implements Listener {
         /** The player leaves the server */
         QUIT,
         
-        /** A clock of 5 seconds */
+        /** A clock */
         TIMER,
 		
 		 /** Manual */
