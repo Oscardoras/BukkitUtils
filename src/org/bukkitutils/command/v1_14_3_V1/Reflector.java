@@ -1,4 +1,4 @@
-package org.bukkitutils.command.v1_14_2_V1;
+package org.bukkitutils.command.v1_14_3_V1;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -22,12 +22,12 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
-import org.bukkitutils.command.v1_14_2_V1.CommandRegister.CommandExecutorType;
-import org.bukkitutils.command.v1_14_2_V1.CommandRegister.CommandRunnable;
-import org.bukkitutils.command.v1_14_2_V1.arguments.Argument;
-import org.bukkitutils.command.v1_14_2_V1.arguments.CustomArgument;
-import org.bukkitutils.command.v1_14_2_V1.arguments.GreedyStringArgument;
-import org.bukkitutils.command.v1_14_2_V1.arguments.LiteralArgument;
+import org.bukkitutils.command.v1_14_3_V1.CommandRegister.CommandExecutorType;
+import org.bukkitutils.command.v1_14_3_V1.CommandRegister.CommandRunnable;
+import org.bukkitutils.command.v1_14_3_V1.arguments.Argument;
+import org.bukkitutils.command.v1_14_3_V1.arguments.CustomArgument;
+import org.bukkitutils.command.v1_14_3_V1.arguments.GreedyStringArgument;
+import org.bukkitutils.command.v1_14_3_V1.arguments.LiteralArgument;
 import org.bukkitutils.io.TranslatableMessage;
 
 import com.mojang.brigadier.Command;
@@ -292,13 +292,14 @@ public final class Reflector {
 	}
 	
 	private static CommandSender getCommandSender(Object source) {
-		CommandSender sender = null;
 		try {
-			sender = (CommandSender) getMethod(getNmsClass("CommandListenerWrapper"), "getBukkitSender").invoke(source);
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | SecurityException | NoSuchMethodException | ClassNotFoundException e) {
+			return (CommandSender) getMethod(getNmsClass("CommandListenerWrapper"), "getBukkitSender").invoke(source);
+		} catch (InvocationTargetException e) {
+			return Bukkit.getConsoleSender();
+		} catch (IllegalAccessException | IllegalArgumentException | SecurityException | NoSuchMethodException | ClassNotFoundException e) {
 			e.printStackTrace();
+			return null;
 		}
-		return sender;
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////

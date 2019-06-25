@@ -1,11 +1,11 @@
-package org.bukkitutils.command.v1_14_2_V1;
+package org.bukkitutils.command.v1_14_3_V1;
 
 import java.util.LinkedHashMap;
 
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
-import org.bukkitutils.command.v1_14_2_V1.arguments.Argument;
+import org.bukkitutils.command.v1_14_3_V1.arguments.Argument;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
