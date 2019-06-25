@@ -264,8 +264,7 @@ public final class Reflector {
 				
 			if(proxyEntity != null) {
 				//Force proxyEntity to be a NMS Entity object
-				Object bukkitProxyEntity = getMethod(getNmsClass("Entity"), "getBukkitEntity").invoke(getNmsClass("Entity").cast(proxyEntity));
-				CommandSender proxy  = (CommandSender) bukkitProxyEntity;
+				CommandSender proxy = (CommandSender) getMethod(getNmsClass("Entity"), "getBukkitEntity").invoke(getNmsClass("Entity").cast(proxyEntity));
 				
 				if(!proxy.equals(parameters.sender)) {
 					Class proxyClass = getObcClass("command.ProxiedNativeCommandSender");
@@ -295,7 +294,7 @@ public final class Reflector {
 		try {
 			return (CommandSender) getMethod(getNmsClass("CommandListenerWrapper"), "getBukkitSender").invoke(source);
 		} catch (InvocationTargetException e) {
-			return Bukkit.getConsoleSender();
+			return FunctionCommandSender.getFunctionCommandSender();
 		} catch (IllegalAccessException | IllegalArgumentException | SecurityException | NoSuchMethodException | ClassNotFoundException e) {
 			e.printStackTrace();
 			return null;
