@@ -23,7 +23,7 @@ public final class PlayerReloader implements Listener {
 		 * @param player the player to reload
 		 * @param type the reloading type
 		 */
-		void onReload(Player player, Type type);
+		void onReload(Player player, Location location, Type type);
 	}
 	
 	/** The reloading type */
@@ -69,38 +69,44 @@ public final class PlayerReloader implements Listener {
         Bukkit.getPluginManager().registerEvents(this, plugin);
         if (ticks > 0L) Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
 			public void run() {
-                for (Player player : Bukkit.getOnlinePlayers()) runnable.onReload(player, Type.TIMER);
+                for (Player player : Bukkit.getOnlinePlayers()) runnable.onReload(player, player.getLocation(), Type.TIMER);
             }
         }, 0L, ticks);
     }
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     private void on(PlayerJoinEvent e) {
-    	runnable.onReload(e.getPlayer(), Type.JOIN);
+    	Player player = e.getPlayer();
+    	runnable.onReload(player, player.getLocation(), Type.JOIN);
     }
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void on(PlayerMoveEvent e) {
-    	Location from = e.getFrom();
-    	Location to = e.getTo();
-    	if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
-	        runnable.onReload(e.getPlayer(), Type.MOVE);
+    	if (!e.isCancelled()) {
+	    	Location from = e.getFrom();
+	    	Location to = e.getTo();
+	    	if (from.getBlockX() != to.getBlockX() || from.getBlockY() != to.getBlockY() || from.getBlockZ() != to.getBlockZ()) {
+		        runnable.onReload(e.getPlayer(), to, Type.MOVE);
+	    	}
     	}
     }
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
 	public void on(PlayerRespawnEvent e) {
-    	runnable.onReload(e.getPlayer(), Type.RESPAWN);
+    	runnable.onReload(e.getPlayer(), e.getRespawnLocation(), Type.RESPAWN);
 	}
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void on(PlayerTeleportEvent e) {
-    	runnable.onReload(e.getPlayer(), Type.TELEPORT);
+    	if (!e.isCancelled()) {
+    		runnable.onReload(e.getPlayer(), e.getTo(), Type.TELEPORT);
+    	}
     }
     
-    @EventHandler(priority = EventPriority.LOW)
+    @EventHandler(priority = EventPriority.HIGHEST)
     public void on(PlayerQuitEvent e) {
-    	runnable.onReload(e.getPlayer(), Type.QUIT);
+    	Player player = e.getPlayer();
+    	runnable.onReload(player, player.getLocation(), Type.QUIT);
     }
 	
 }
