@@ -55,22 +55,22 @@ public final class PlayerReloader implements Listener {
 	 * @param plugin the plugin
 	 * @param runable the PlayerReloaderRunnable to run when the player is reloaded is performed
 	 */
-	public static PlayerReloaderRunnable register(Plugin plugin, PlayerReloaderRunnable runnable) {
-    	new PlayerReloader(plugin, runnable);
+	public static PlayerReloaderRunnable register(Plugin plugin, PlayerReloaderRunnable runnable, long ticks) {
+    	new PlayerReloader(plugin, runnable, ticks);
     	return runnable;
     }
 	
     
 	private final PlayerReloaderRunnable runnable;
     
-    private PlayerReloader(Plugin plugin, PlayerReloaderRunnable runnable) {
+    private PlayerReloader(Plugin plugin, PlayerReloaderRunnable runnable, long ticks) {
     	this.runnable = runnable;
         Bukkit.getPluginManager().registerEvents(this, plugin);
         Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
 			public void run() {
                 for (Player player : Bukkit.getOnlinePlayers()) runnable.onReload(player, Type.TIMER);
             }
-        }, 20l, 20l);
+        }, 0L, ticks);
     }
     
     @EventHandler(priority = EventPriority.LOW)
