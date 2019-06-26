@@ -294,7 +294,7 @@ public final class Reflector {
 		try {
 			return (CommandSender) getMethod(getNmsClass("CommandListenerWrapper"), "getBukkitSender").invoke(source);
 		} catch (InvocationTargetException e) {
-			return FunctionCommandSender.getFunctionCommandSender();
+			return Bukkit.getConsoleSender();
 		} catch (IllegalAccessException | IllegalArgumentException | SecurityException | NoSuchMethodException | ClassNotFoundException e) {
 			e.printStackTrace();
 			return null;

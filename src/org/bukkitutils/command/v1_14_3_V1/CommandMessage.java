@@ -51,27 +51,29 @@ public final class CommandMessage {
 	 * @param args the arguments for the translatable message
 	 */
 	public static void send(CommandSender sender, TranslatableMessage message, String... args) {
+		CommandSender caller = sender instanceof ProxiedCommandSender ? ((ProxiedCommandSender) sender).getCaller() : sender;
 		World world = Bukkit.getWorlds().get(0);
-		if (sender instanceof ProxiedCommandSender) sender = ((ProxiedCommandSender) sender).getCaller();
 		
-		if (sender instanceof BlockCommandSender) {
-    		sender.sendMessage(message.getMessage(sender, args));
+		if (caller instanceof BlockCommandSender) {
+			caller.sendMessage(message.getMessage(caller, args));
     		if (world.getGameRuleValue(GameRule.COMMAND_BLOCK_OUTPUT)) {
-    			broadcastToConsole(sender, world, message, args);
-    			broadcastToOps(sender, world, message, args);
+    			broadcastToConsole(caller, world, message, args);
+    			broadcastToOps(caller, world, message, args);
     		}
-		} else if (sender instanceof Entity) {
-			String msg = message.getMessage(sender, args);
-			if (msg.startsWith(ChatColor.RED + "") || world.getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) sender.sendMessage(msg);
-			broadcastToConsole(sender, world, message, args);
-			broadcastToOps(sender, world, message, args);
-		} else if (sender instanceof ConsoleCommandSender) {
-		    sender.sendMessage(ChatColor.stripColor(message.getMessage(sender, args)));
-		    if (broadcastConsoleToOps) broadcastToOps(sender, world, message, args);
-		} else if (sender instanceof RemoteConsoleCommandSender) {
-			sender.sendMessage(message.getMessage(sender, args));
-			broadcastToConsole(sender, world, message, args);
-			if (broadcastRconToOps) broadcastToOps(sender, world, message, args);
+		} else if (caller instanceof Entity) {
+			String msg = message.getMessage(caller, args);
+			if (msg.startsWith(ChatColor.RED + "") || world.getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) caller.sendMessage(msg);
+			broadcastToConsole(caller, world, message, args);
+			broadcastToOps(caller, world, message, args);
+		} else if (caller instanceof ConsoleCommandSender) {
+			if (!(sender instanceof ProxiedCommandSender) || world.getGameRuleValue(GameRule.COMMAND_BLOCK_OUTPUT)) {
+				caller.sendMessage(ChatColor.stripColor(message.getMessage(caller, args)));
+			    if (broadcastConsoleToOps) broadcastToOps(caller, world, message, args);
+			}
+		} else if (caller instanceof RemoteConsoleCommandSender) {
+			caller.sendMessage(message.getMessage(caller, args));
+			broadcastToConsole(caller, world, message, args);
+			if (broadcastRconToOps) broadcastToOps(caller, world, message, args);
 		}
 	}
 	
@@ -106,9 +108,11 @@ public final class CommandMessage {
 	 * @param args the arguments for the translatable messages
 	 */
 	public static void sendStringList(CommandSender sender, Collection<String> list, TranslatableMessage listMessage, TranslatableMessage emptyMessage, String... args) {
+		CommandSender caller = sender instanceof ProxiedCommandSender ? ((ProxiedCommandSender) sender).getCaller() : sender;
+		
 		List<String> messages = new ArrayList<String>();
 		if (!list.isEmpty()) {
-			if (listMessage != null) messages.add(listMessage.getMessage(sender, args).replaceAll("%list%", ""+list.size()));
+			if (listMessage != null) messages.add(listMessage.getMessage(caller, args).replaceAll("%list%", ""+list.size()));
 			if (!list.isEmpty()) {
 				String string = "";
 				int i = 0;
@@ -122,18 +126,18 @@ public final class CommandMessage {
 				}
 				messages.add(string);
 			}
-		} else messages.add(emptyMessage.getMessage(sender, args));
+		} else messages.add(emptyMessage.getMessage(caller, args));
 		
 		
 		World world = Bukkit.getWorlds().get(0);
-		if (sender instanceof ProxiedCommandSender) sender = ((ProxiedCommandSender) sender).getCaller();
 		
 		for (String message : messages) {
-			if (sender instanceof BlockCommandSender) sender.sendMessage(message);
-			else if (sender instanceof Entity)
-				if (message.startsWith(ChatColor.RED + "") || world.getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) sender.sendMessage(message);
-			else if (sender instanceof ConsoleCommandSender) sender.sendMessage(ChatColor.stripColor(message));
-			else if (sender instanceof RemoteConsoleCommandSender) sender.sendMessage(message);
+			if (caller instanceof BlockCommandSender) caller.sendMessage(message);
+			else if (caller instanceof Entity)
+				if (message.startsWith(ChatColor.RED + "") || world.getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) caller.sendMessage(message);
+			else if (caller instanceof ConsoleCommandSender)
+				if (!(sender instanceof ProxiedCommandSender) || world.getGameRuleValue(GameRule.COMMAND_BLOCK_OUTPUT)) caller.sendMessage(ChatColor.stripColor(message));
+			else if (caller instanceof RemoteConsoleCommandSender) caller.sendMessage(message);
 		}
 	}
 	
