@@ -61,7 +61,7 @@ public final class Notification implements Listener {
 					entity.sendMessage(message.getMessage(entity, args));
 					continue;
 				}
-			} catch (IllegalArgumentException ex) {}
+			} catch (IllegalArgumentException e) {}
 			Notification.send(Bukkit.getOfflinePlayer(entry), message, args);
 		}
 	}

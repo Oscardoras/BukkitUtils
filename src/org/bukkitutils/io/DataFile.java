@@ -14,11 +14,11 @@ import java.util.TimerTask;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 
-/** Represents a file containing datas up to date */
+/** Represents a file containing datas */
 public class DataFile {
 	
-	private final static List<FileCache<YamlConfiguration>> yamlConfigurationFiles = new ArrayList<FileCache<YamlConfiguration>>();
-	private final static List<FileCache<Properties>> propertiesFiles = new ArrayList<FileCache<Properties>>();
+	protected final static List<FileCache<YamlConfiguration>> yamlConfigurationFiles = new ArrayList<FileCache<YamlConfiguration>>();
+	protected final static List<FileCache<Properties>> propertiesFiles = new ArrayList<FileCache<Properties>>();
 	
 	static {
 		new Timer().schedule(new TimerTask() {
@@ -27,49 +27,31 @@ public class DataFile {
 				    synchronized(yamlConfigurationFiles) {
     					Iterator<FileCache<YamlConfiguration>> it = yamlConfigurationFiles.iterator();
     					while (it.hasNext()) {
-    					    FileCache<YamlConfiguration> fileCache = it.next();
-    						YamlConfiguration config = fileCache.get();
-    						if (config != null) {
-    							try {
-    								config.load(fileCache.dataFile.getFile());
-    							} catch (Exception ex) {
-    								ex.printStackTrace();
-    							}
-    						} else {
-    							it.remove();
-    						}
+    						YamlConfiguration config = it.next().get();
+    						if (config == null) it.remove();
     					}
 				    }
-				} catch (Exception ex) {
-					ex.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
-		}, 5000l, 5000l);
+		}, 50L, 50L);
 		
 		new Timer().schedule(new TimerTask() {
 			public void run() {
 				try {
-				    synchronized(propertiesFiles) {
-    					Iterator<FileCache<Properties>> propertiesIt = propertiesFiles.iterator();
-    					while (propertiesIt.hasNext()) {
-    					    FileCache<Properties> fileCache = propertiesIt.next();
-    						Properties properties = fileCache.get();
-    						if (properties != null) {
-    							try {
-    								properties.load(new FileInputStream(fileCache.dataFile.getFile()));
-    							} catch (Exception ex) {
-    								ex.printStackTrace();
-    							}
-    						} else {
-    							propertiesIt.remove();
-    						}
+					synchronized(propertiesFiles) {
+    					Iterator<FileCache<Properties>> it = propertiesFiles.iterator();
+    					while (it.hasNext()) {
+    						Properties properties = it.next().get();
+    						if (properties == null) it.remove();
     					}
 				    }
-				} catch (Exception ex) {
-					ex.printStackTrace();
+				} catch (Exception e) {
+					e.printStackTrace();
 				}
 			}
-		}, 5000l, 5000l);
+		}, 50L, 50L);
 	}
 	
 	
@@ -106,8 +88,8 @@ public class DataFile {
 				file.createNewFile();
 			}
 			return file;
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -131,8 +113,8 @@ public class DataFile {
     			}
 			}
 			return config;
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -157,8 +139,8 @@ public class DataFile {
     			}
 			}
 			return properties;
-		} catch (Exception ex) {
-			ex.printStackTrace();
+		} catch (Exception e) {
+			e.printStackTrace();
 		}
 		return null;
 	}
@@ -181,19 +163,21 @@ public class DataFile {
     				return;
     			}
 			}
-		} catch (IOException ex) {
-			ex.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
 	@Override
 	public boolean equals(Object object) {
 		if (object != null) {
-			try {
-				if (object instanceof DataFile) return getFile().getCanonicalPath().equals(((DataFile) object).getFile().getCanonicalPath());
-			} catch (IOException ex) {
-				ex.printStackTrace();
-			}
+			if (object instanceof DataFile)
+				try {
+					return getFile().getCanonicalPath().equals(((DataFile) object).getFile().getCanonicalPath());
+				} catch (IOException e) {
+					e.printStackTrace();
+					return getFile().getPath().equals(((DataFile) object).getFile().getPath());
+				}
 			if (object instanceof FileCache<?>) return this.equals(((FileCache<?>) object).dataFile);
 		}
 		return false;
@@ -203,8 +187,8 @@ public class DataFile {
 	public int hashCode() {
 		try {
 			return getFile().getCanonicalPath().hashCode();
-		} catch (IOException ex) {
-			ex.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
 			return getFile().getPath().hashCode();
 		}
 	}
@@ -213,7 +197,7 @@ public class DataFile {
 
 class FileCache<T> extends SoftReference<T> {
 	
-	public DataFile dataFile;
+	public final DataFile dataFile;
 
 	public FileCache(DataFile dataFile, T data) {
 		super(data);
