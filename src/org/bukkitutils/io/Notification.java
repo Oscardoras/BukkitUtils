@@ -1,5 +1,8 @@
 package org.bukkitutils.io;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
@@ -41,7 +44,7 @@ public final class Notification implements Listener {
 			UUID uuid = UUID.randomUUID();
 			config.set(offlinePlayer.getUniqueId().toString() + "." + uuid.toString() + ".plugin", message.getPlugin().getName());
 			config.set(offlinePlayer.getUniqueId().toString() + "." + uuid.toString() + ".path", message.getPath());
-			config.set(offlinePlayer.getUniqueId().toString() + "." + uuid.toString() + ".args", args);
+			config.set(offlinePlayer.getUniqueId().toString() + "." + uuid.toString() + ".args", Arrays.asList(args));
 			file.save();
 		}
 	}
@@ -76,39 +79,40 @@ public final class Notification implements Listener {
 	
 	@EventHandler
 	public void on(PlayerJoinEvent e) {
-		Player player = e.getPlayer();
-		
-		DataFile file = new DataFile(Bukkit.getWorlds().get(0).getWorldFolder() + "/data/notifications.yml");
-		YamlConfiguration config = file.getYML();
-		if (config.contains(player.getUniqueId().toString())) {
-			boolean found = false;
-			for (String key : config.getConfigurationSection(player.getUniqueId().toString()).getKeys(false)) {
-				if (config.contains(player.getUniqueId().toString() + "." + key + ".plugin")) {
-					Plugin pl = Bukkit.getPluginManager().getPlugin(config.getString(player.getUniqueId().toString() + "." + key + ".plugin"));
-					if (plugin.equals(pl)) {
-						if (config.contains(player.getUniqueId().toString() + "." + key + ".path")) {
-							String[] args;
-							if (config.contains(player.getUniqueId().toString() + "." + key + ".args")) {
-								args = config.getStringList(player.getUniqueId().toString() + "." + key + ".args").toArray(new String[0]);
-							} else args = new String[0];
-							
-							try {
-								player.sendMessage(new TranslatableMessage(plugin, config.getString(player.getUniqueId().toString() + "." + key + ".path")).getMessage(player, args));
-							} catch (TranslatableMessageException ex) {
-								ex.printStackTrace();
+		Bukkit.getScheduler().scheduleSyncDelayedTask(plugin, () -> {
+			Player player = e.getPlayer();
+			
+			DataFile file = new DataFile(Bukkit.getWorlds().get(0).getWorldFolder() + "/data/notifications.yml");
+			YamlConfiguration config = file.getYML();
+			if (config.contains(player.getUniqueId().toString())) {
+				boolean found = false;
+				for (String key : config.getConfigurationSection(player.getUniqueId().toString()).getKeys(false)) {
+					if (config.contains(player.getUniqueId().toString() + "." + key + ".path")) {
+						if (config.contains(player.getUniqueId().toString() + "." + key + ".plugin")) {
+							Plugin pl = Bukkit.getPluginManager().getPlugin(config.getString(player.getUniqueId().toString() + "." + key + ".plugin"));
+							if (plugin.equals(pl)) {
+								List<String> args;
+								if (config.contains(player.getUniqueId().toString() + "." + key + ".args"))
+									args = config.getStringList(player.getUniqueId().toString() + "." + key + ".args");
+								else args = new ArrayList<String>();
+								
+								try {
+									player.sendMessage(new TranslatableMessage(plugin, config.getString(player.getUniqueId().toString() + "." + key + ".path")).getMessage(player, args.toArray(new String[args.size()])));
+								} catch (TranslatableMessageException ex) {
+									ex.printStackTrace();
+								}
+								
+								config.set(player.getUniqueId().toString() + "." + key, null);
+								if (config.getConfigurationSection(player.getUniqueId().toString()).getKeys(false).isEmpty())
+									config.set(player.getUniqueId().toString(), null);
+								found = true;
 							}
-							
-							config.set(player.getUniqueId().toString() + "." + key, null);
-							if (config.getConfigurationSection(player.getUniqueId().toString()).getKeys(false).isEmpty()) {
-								config.set(player.getUniqueId().toString(), null);
-							}
-							found = true;
 						}
 					}
 				}
+				if (found) file.save();
 			}
-			if (found) file.save();
-		}
+		}, 1L);
 	}
 	
 }

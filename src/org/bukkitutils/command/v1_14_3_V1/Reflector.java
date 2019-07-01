@@ -349,21 +349,20 @@ public final class Reflector {
 			provider = (context, builder) -> {
 				CommandParameters parameters = getCommandParameters(context);
 				
-				if (executorType == CommandExecutorType.PLAYER) {
+				if (executorType == CommandExecutorType.PLAYER)
 					if (!(parameters.executor instanceof Player)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.player");
 						message.setColor(net.md_5.bungee.api.ChatColor.RED);
 						parameters.sender.spigot().sendMessage(message);
 						return builder.buildFuture();
 					}
-				} else if (executorType == CommandExecutorType.ENTITY) {
+				else if (executorType == CommandExecutorType.ENTITY)
 					if (!(parameters.executor instanceof Entity)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.entity");
 						message.setColor(net.md_5.bungee.api.ChatColor.RED);
 						parameters.sender.spigot().sendMessage(message);
 						return builder.buildFuture();
 					}
-				}
 				
 				//Array for arguments for executor
 				List<Object> args = new ArrayList<>();
@@ -376,9 +375,8 @@ public final class Reflector {
 				Collection<String> list =  type.getSuggestions(parameters.executor, parameters.location, args.toArray(new Object[args.size()]));
 				if (list != null) {
 					String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
-					for (String suggestion : list) {
+					for (String suggestion : list)
 						if (suggestion.toLowerCase(Locale.ROOT).startsWith(remaining)) builder.suggest(suggestion);
-					}
 				}
 				return builder.buildFuture();
 			};
