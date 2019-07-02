@@ -67,10 +67,8 @@ public final class PlayerReloader implements Listener {
     private PlayerReloader(Plugin plugin, PlayerReloaderRunnable runnable, long ticks) {
     	this.runnable = runnable;
         Bukkit.getPluginManager().registerEvents(this, plugin);
-        if (ticks > 0L) Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, new Runnable() {
-			public void run() {
-                for (Player player : Bukkit.getOnlinePlayers()) runnable.onReload(player, player.getLocation(), Type.TIMER);
-            }
+        if (ticks > 0L) Bukkit.getScheduler().scheduleSyncRepeatingTask(plugin, () -> {
+        	for (Player player : Bukkit.getOnlinePlayers()) runnable.onReload(player, player.getLocation(), Type.TIMER);
         }, 0L, ticks);
     }
     
