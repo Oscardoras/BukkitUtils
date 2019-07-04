@@ -10,11 +10,10 @@ import java.util.Properties;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import org.bukkit.event.Listener;
 import org.bukkit.plugin.java.JavaPlugin;
 
 /** Represents a Bukkit plugin */
-public class BukkitPlugin extends JavaPlugin implements Listener {
+public class BukkitPlugin extends JavaPlugin {
 	
 	private final Map<String, Properties> translations = new HashMap<String, Properties>();
 	
