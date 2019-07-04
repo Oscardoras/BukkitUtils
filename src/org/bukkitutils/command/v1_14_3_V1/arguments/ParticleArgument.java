@@ -2,9 +2,8 @@ package org.bukkitutils.command.v1_14_3_V1.arguments;
 
 import java.lang.reflect.Method;
 
-import org.bukkit.Location;
 import org.bukkit.Particle;
-import org.bukkit.command.CommandSender;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
@@ -18,7 +17,7 @@ public class ParticleArgument extends Argument<Particle> {
 	}
 	
 	@Override
-	public Particle getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	protected Particle parse(String key, CommandContext<?> context) throws Exception {
 		Method toBukkit = Reflector.getMethod(Reflector.getObcClass("CraftParticle"), "toBukkit", Reflector.getNmsClass("ParticleParam"));
 		Object particleParam = Reflector.getMethod(Reflector.getNmsClass("ArgumentParticle"), "a", CommandContext.class, String.class).invoke(null, context, key);
 		return (Particle) toBukkit.invoke(null, particleParam);

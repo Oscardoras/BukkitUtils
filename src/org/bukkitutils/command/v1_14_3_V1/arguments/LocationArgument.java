@@ -1,7 +1,7 @@
 package org.bukkitutils.command.v1_14_3_V1.arguments;
 
 import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.arguments.ArgumentType;
@@ -53,7 +53,7 @@ public class LocationArgument extends Argument<Location> {
 	}
 	
 	@Override
-	public Location getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	public Location parse(String key, CommandContext<?> context) throws Exception {
 		switch(getLocationType()) {
 			case BLOCK_LOCATION:
 				{
@@ -61,15 +61,15 @@ public class LocationArgument extends Argument<Location> {
 					int x = (int) Reflector.getMethod(Reflector.getNmsClass("BaseBlockPosition"), "getX").invoke(blockPosition);
 					int y = (int) Reflector.getMethod(Reflector.getNmsClass("BaseBlockPosition"), "getY").invoke(blockPosition);
 					int z = (int) Reflector.getMethod(Reflector.getNmsClass("BaseBlockPosition"), "getZ").invoke(blockPosition);
-					return new Location(location.getWorld(), x, y, z);
+					return new Location(Reflector.getCommandLocation(context.getSource()).getWorld(), x, y, z);
 				}
-		case PRECISE_LOCATION:
+			case PRECISE_LOCATION:
 				{
 					Object vec3D = Reflector.getMethod(Reflector.getNmsClass("ArgumentVec3"), "a", CommandContext.class, String.class).invoke(null, context, key);
 					double x = Reflector.getField(vec3D.getClass(), "x").getDouble(vec3D);
 					double y = Reflector.getField(vec3D.getClass(), "y").getDouble(vec3D);
 					double z = Reflector.getField(vec3D.getClass(),"z").getDouble(vec3D);
-					return new Location(location.getWorld(), x, y, z);
+					return new Location(Reflector.getCommandLocation(context.getSource()).getWorld(), x, y, z);
 				}
 		}
 		return null;

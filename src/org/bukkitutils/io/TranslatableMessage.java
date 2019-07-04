@@ -79,7 +79,7 @@ public class TranslatableMessage {
 		throw new TranslatableMessageException(path);
 	}
 	
-	protected String getLanguage(CommandSender sender) {
+	public static String getLanguage(CommandSender sender) {
 		if (sender instanceof ProxiedCommandSender) sender = ((ProxiedCommandSender) sender).getCaller();
 		if (sender instanceof Player) return ((Player) sender).getLocale().split("_")[0];
 		else return "en";

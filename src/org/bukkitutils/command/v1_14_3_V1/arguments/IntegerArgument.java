@@ -1,7 +1,6 @@
 package org.bukkitutils.command.v1_14_3_V1.arguments;
 
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -32,7 +31,7 @@ public class IntegerArgument extends Argument<Integer> {
 	}
 	
 	@Override
-	public Integer getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	protected Integer parse(String key, CommandContext<?> context) throws Exception {
 		return context.getArgument(key, int.class);
 	}
 	

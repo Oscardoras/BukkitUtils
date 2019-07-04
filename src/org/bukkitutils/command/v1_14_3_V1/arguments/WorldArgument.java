@@ -1,24 +1,27 @@
 package org.bukkitutils.command.v1_14_3_V1.arguments;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 
 import org.bukkit.Bukkit;
-import org.bukkit.Location;
 import org.bukkit.World;
-import org.bukkit.command.CommandSender;
+import org.bukkitutils.command.v1_14_3_V1.CustomArgument;
 import org.bukkitutils.io.TranslatableMessage;
 
 /** Represents a world argument for a Mojang Brigadier command */
 public class WorldArgument extends CustomArgument<World> {
 	
-	/** Represents a world argument with an english error message for a Mojang Brigadier command */
+	/** Represents a world argument with an English error message for a Mojang Brigadier command */
 	public WorldArgument() {
 		this(new TranslatableMessage(null, "world.does_not_exist") {
 			public String getMessage(String language, String... args) {
 				return "§cThe world '" + args[0] + "' was not found";
 			}
+		});
+		withSuggestionsProvider((cmd) -> {
+			List<String> list = new ArrayList<String>();
+			for (World world : Bukkit.getWorlds()) list.add(world.getName());
+			return list;
 		});
 	}
 	
@@ -29,16 +32,9 @@ public class WorldArgument extends CustomArgument<World> {
 	public WorldArgument(TranslatableMessage error) {
 		super(error);
 	}
-
-	@Override
-	public Collection<String> getSuggestions(CommandSender executor, Location location, Object[] args) {
-		List<String> list = new ArrayList<String>();
-		for (World world : Bukkit.getWorlds()) list.add(world.getName());
-		return list;
-	}
 	
 	@Override
-	public World getArg(String arg, CommandSender executor, Location location) {
+	protected World parse(String arg, SuggestedCommand cmd) {
 		return Bukkit.getWorld(arg);
 	}
 	

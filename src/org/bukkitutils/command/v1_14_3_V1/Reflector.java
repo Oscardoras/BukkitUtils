@@ -9,25 +9,25 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameRule;
 import org.bukkit.Location;
-import org.bukkit.command.BlockCommandSender;
+import org.bukkit.World;
 import org.bukkit.command.CommandSender;
-import org.bukkit.command.ProxiedCommandSender;
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
+import org.bukkitutils.command.v1_14_3_V1.Argument.SuggestedCommand;
+import org.bukkitutils.command.v1_14_3_V1.Argument.SuggestionsProvider;
 import org.bukkitutils.command.v1_14_3_V1.CommandRegister.CommandExecutorType;
 import org.bukkitutils.command.v1_14_3_V1.CommandRegister.CommandRunnable;
-import org.bukkitutils.command.v1_14_3_V1.arguments.Argument;
-import org.bukkitutils.command.v1_14_3_V1.arguments.CustomArgument;
+import org.bukkitutils.command.v1_14_3_V1.CommandRegister.PerformedCommand;
 import org.bukkitutils.command.v1_14_3_V1.arguments.GreedyStringArgument;
-import org.bukkitutils.command.v1_14_3_V1.arguments.LiteralArgument;
 import org.bukkitutils.io.TranslatableMessage;
 
 import com.mojang.brigadier.Command;
@@ -43,9 +43,13 @@ import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
 
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.BaseComponent;
+import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
+import net.md_5.bungee.chat.ComponentSerializer;
 
-/** Contains methods for arguments reflexion */
+/** Contains methods for arguments reflection */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class Reflector {
 	private Reflector() {}
@@ -138,43 +142,55 @@ public final class Reflector {
 			
 			Command command = (context) -> {
 				
-				CommandParameters parameters = getCommandParameters(context);
+				Object source = context.getSource();
+				
+				CommandSender sender = getCommandSender(source);
+				CommandSender executor = getCommandExecutor(source);
+				if (executor == null) executor = sender;
 				
 				if (executorType == CommandExecutorType.PLAYER) {
-					if (!(parameters.executor instanceof Player)) {
+					if (!(executor instanceof Player)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.player");
-						message.setColor(net.md_5.bungee.api.ChatColor.RED);
-						parameters.sender.spigot().sendMessage(message);
+						message.setColor(ChatColor.RED);
+						sendFailureMessage(source, message);
 						return 0;
 					}
 				} else if (executorType == CommandExecutorType.ENTITY) {
-					if (!(parameters.executor instanceof Entity)) {
+					if (!(executor instanceof Entity)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.entity");
-						message.setColor(net.md_5.bungee.api.ChatColor.RED);
-						parameters.sender.spigot().sendMessage(message);
+						message.setColor(ChatColor.RED);
+						sendFailureMessage(source, message);
 						return 0;
 					}
 				}
+				
+				Location location = getCommandLocation(source);
 							
 				//Array for arguments for executor
 				List<Object> args = new ArrayList<>();
 				for(Entry<String, Argument<?>> entry : arguments.entrySet()) {
 					try {
-						populateArgs(entry, context, parameters.sender, parameters.executor, parameters.location, args);
+						populateArgs(entry, context, sender, executor, location, args);
 					} catch (CommandSyntaxException e) {
 						throw e;
 					} catch (InvocationTargetException e) {
-						Throwable ex = e.getCause();
-						if (ex instanceof CommandSyntaxException) throw (CommandSyntaxException) ex;
-						else ex.printStackTrace();
+						Throwable e2 = e.getCause();
+						while (e2 instanceof InvocationTargetException) e2 = e2.getCause();
+						
+						if (e2 instanceof CommandSyntaxException) throw (CommandSyntaxException) e2;
+						else {
+							e2.printStackTrace();
+							args.add(null);
+						}
 					} catch (Exception e) {
 						e.printStackTrace();
+						args.add(null);
 					}
 				}
 				
-				//Run resulting executor
+				//Run
 				try {
-					return runnable.run(parameters.sender, parameters.executor, parameters.location, args.toArray(new Object[args.size()]));
+					return runnable.run(new PerformedCommand(source, sender, executor, location, args.toArray(new Object[args.size()])));
 				} catch (CommandSyntaxException e) {
 					throw e;
 				} catch (Exception e) {
@@ -229,75 +245,20 @@ public final class Reflector {
 			//Register aliases
 			for(String str : aliases) dispatcher.register((LiteralArgumentBuilder) getLiteralArgumentBuilder(str, permission).redirect(resultantNode));
 			
-			Class<?> craftServer = getObcClass("CraftServer");
-			getMethod(craftServer, "setVanillaCommands", boolean.class).invoke(Bukkit.getServer(), false);
-			SimpleCommandMap map = (SimpleCommandMap) getMethod(craftServer, "getCommandMap").invoke(Bukkit.getServer());
-			map.getCommand(name).setPermission(permission.getName());
-			org.bukkit.command.Command cmd = map.getCommand("minecraft:" + name);
-			if (cmd != null) cmd.setPermission(permission.getName());
+			//Permissions
+			try {
+				Class<?> craftServer = getObcClass("CraftServer");
+				getMethod(craftServer, "setVanillaCommands", boolean.class).invoke(Bukkit.getServer(), false);
+				SimpleCommandMap map = (SimpleCommandMap) getMethod(craftServer, "getCommandMap").invoke(Bukkit.getServer());
+				map.getCommand(name).setPermission(permission.getName());
+				org.bukkit.command.Command cmd = map.getCommand("minecraft:" + name);
+				if (cmd != null) cmd.setPermission(permission.getName());
+			} catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException | SecurityException | ClassNotFoundException e) {
+				e.printStackTrace();
+			}
 			
 		} catch (Exception e) {
 			e.printStackTrace();
-		}
-	}
-	
-	//////////////////////////////////////////////////////////////////////////////////////////////////////
-	// SECTION: CommandSender                                                                           //
-	//////////////////////////////////////////////////////////////////////////////////////////////////////
-	
-	private static class CommandParameters {
-		public CommandSender sender;
-		public CommandSender executor;
-		public Location location;
-	}
-	
-	private static CommandParameters getCommandParameters(CommandContext context) {
-		CommandParameters parameters = new CommandParameters();
-		
-		parameters.sender = getCommandSender(context.getSource());
-		parameters.executor = parameters.sender;
-		
-		try {
-			//getMethod(getNMSClass("CommandListenerWrapper"), "f").invoke(cmdCtx.getSource()); -> getMethod(getNMSClass("CommandListenerWrapper"), "getEntity").invoke(cmdCtx.getSource());
-			//Both of these return field CommandListenerWrapper.k
-			Object proxyEntity = getField(getNmsClass("CommandListenerWrapper"), "k").get(context.getSource());
-				
-			if(proxyEntity != null) {
-				//Force proxyEntity to be a NMS Entity object
-				CommandSender proxy = (CommandSender) getMethod(getNmsClass("Entity"), "getBukkitEntity").invoke(getNmsClass("Entity").cast(proxyEntity));
-				
-				if(!proxy.equals(parameters.sender)) {
-					Class proxyClass = getObcClass("command.ProxiedNativeCommandSender");
-					//ProxiedNativeCommandSender(CommandListenerWrapper orig, CommandSender caller, CommandSender callee)
-					Constructor proxyConstructor = proxyClass.getConstructor(getNmsClass("CommandListenerWrapper"), CommandSender.class, CommandSender.class);
-					Object proxyInstance = proxyConstructor.newInstance(context.getSource(), parameters.sender, proxy);
-					parameters.sender = ((ProxiedCommandSender) proxyInstance);
-					parameters.executor = ((ProxiedCommandSender) proxyInstance).getCallee();
-				}
-			}
-		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | SecurityException | ClassNotFoundException | NoSuchMethodException | NoSuchFieldException | InstantiationException e) {
-			e.printStackTrace();
-		}
-		
-		if(parameters.executor instanceof BlockCommandSender) {
-			parameters.location = ((BlockCommandSender) parameters.executor).getBlock().getLocation();
-		} else if(parameters.executor instanceof Entity) {
-			parameters.location = ((Entity) parameters.executor).getLocation();
-		} else {
-			parameters.location = Bukkit.getWorlds().get(0).getSpawnLocation();
-		}
-		
-		return parameters;
-	}
-	
-	private static CommandSender getCommandSender(Object source) {
-		try {
-			return (CommandSender) getMethod(getNmsClass("CommandListenerWrapper"), "getBukkitSender").invoke(source);
-		} catch (InvocationTargetException e) {
-			return Bukkit.getConsoleSender();
-		} catch (IllegalAccessException | IllegalArgumentException | SecurityException | NoSuchMethodException | ClassNotFoundException e) {
-			e.printStackTrace();
-			return null;
 		}
 	}
 	
@@ -306,29 +267,31 @@ public final class Reflector {
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	
 	//Populates arguments list
-	private static void populateArgs(Entry<String, Argument<?>> entry, CommandContext context, CommandSender sender, CommandSender executor, Location location, List<Object> args) throws Exception {
+	private static void populateArgs(Entry<String, Argument<?>> entry, CommandContext context, final CommandSender sender, CommandSender executor, Location location, List<Object> args) throws Exception {
 		Argument argument = entry.getValue();
 		if (!(argument instanceof LiteralArgument)) {
 			Object arg;
+			
 			String key = entry.getKey();
+			Object a = argument.parse(key, context);
+			
 			if (argument instanceof CustomArgument) {
 				
 				CustomArgument customArgument = (CustomArgument) argument;
-				String str = customArgument.getArg(key, context, executor, location);
-				arg = customArgument.getArg(str, executor, location);
+				arg = customArgument.parse((String) a, new SuggestedCommand(context.getSource(), sender, executor, location, args.toArray(new Object[args.size()])));
 				if (arg == null) {
 					TranslatableMessage error = customArgument.getMessage();
 					if (error != null) {
-						final CommandSender send = sender;
 						throw new SimpleCommandExceptionType(new com.mojang.brigadier.Message() {
 							public String getString() {
-								return error.getMessage(send, str);
+								return ChatColor.RED + error.getMessage(sender, (String) a);
 							}
 						}).create();
 					} else throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
 				}
 				
-			} else arg = argument.getArg(key, context, executor, location);
+			} else arg = a;
+			
 			args.add(arg);
 		}
 	}
@@ -344,51 +307,165 @@ public final class Reflector {
 	private static <T> RequiredArgumentBuilder<?, ?> getRequiredArgumentBuilder(String argumentName, Argument<?> type, Permission permission, CommandExecutorType executorType, final LinkedHashMap<String, Argument<?>> arguments) {
 		SuggestionProvider provider = null;
 		
-		try {
-			if (!type.getClass().getMethod("getSuggestions", CommandSender.class, Location.class, Object[].class).getDeclaringClass().equals(Argument.class))
+		SuggestionsProvider suggestionsProvider = type.getSugesstionsProvider();
+		if (suggestionsProvider != null)
 			provider = (context, builder) -> {
-				CommandParameters parameters = getCommandParameters(context);
+				Object source = context.getSource();
 				
-				if (executorType == CommandExecutorType.PLAYER)
-					if (!(parameters.executor instanceof Player)) {
-						TranslatableComponent message = new TranslatableComponent("permissions.requires.player");
-						message.setColor(net.md_5.bungee.api.ChatColor.RED);
-						parameters.sender.spigot().sendMessage(message);
-						return builder.buildFuture();
-					}
-				else if (executorType == CommandExecutorType.ENTITY)
-					if (!(parameters.executor instanceof Entity)) {
-						TranslatableComponent message = new TranslatableComponent("permissions.requires.entity");
-						message.setColor(net.md_5.bungee.api.ChatColor.RED);
-						parameters.sender.spigot().sendMessage(message);
-						return builder.buildFuture();
-					}
+				CommandSender sender = getCommandSender(source);
+				CommandSender executor = getCommandExecutor(source);
+				if (executor == null) executor = sender;
+				
+				if (executorType == CommandExecutorType.PLAYER) {
+					if (!(executor instanceof Player)) return builder.buildFuture();
+				} else if (executorType == CommandExecutorType.ENTITY) {
+					if (!(executor instanceof Entity)) return builder.buildFuture();
+				}
+				
+				Location location = getCommandLocation(source);
 				
 				//Array for arguments for executor
 				List<Object> args = new ArrayList<>();
 				for(Entry<String, Argument<?>> entry : arguments.entrySet()) {
 					try {
-						populateArgs(entry, context, parameters.sender, parameters.executor, parameters.location, args);
+						populateArgs(entry, context, sender, executor, location, args);
 					} catch (Exception e) {}
 				}
 				
-				Collection<String> list =  type.getSuggestions(parameters.executor, parameters.location, args.toArray(new Object[args.size()]));
+				Collection<String> list =  suggestionsProvider.run(new SuggestedCommand(source, sender, executor, location, args.toArray(new Object[args.size()])));
 				if (list != null) {
-					String remaining = builder.getRemaining().toLowerCase(Locale.ROOT);
+					String remaining = builder.getRemaining().toLowerCase();
 					for (String suggestion : list)
-						if (suggestion.toLowerCase(Locale.ROOT).startsWith(remaining)) builder.suggest(suggestion);
+						if (suggestion.toLowerCase().startsWith(remaining)) builder.suggest(suggestion);
 				}
 				return builder.buildFuture();
 			};
-		} catch (NoSuchMethodException | SecurityException e) {
-			e.printStackTrace();
-		}
 		
 		RequiredArgumentBuilder<?, ?> a = ((RequiredArgumentBuilder<?, ?>) RequiredArgumentBuilder.argument(argumentName, type.getRawType()).requires(source -> {
 			return permission == null || getCommandSender(source).hasPermission(permission);
 		}));
 		if (provider != null) return a.suggests(provider);
 		else return a;
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SECTION: CommandSender                                                                           //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	public static CommandSender getCommandSender(Object source) {
+		try {
+			return (CommandSender) getMethod(source.getClass(), "getBukkitSender").invoke(source);
+		} catch (InvocationTargetException e) {
+			return Bukkit.getConsoleSender();
+		} catch (IllegalAccessException | IllegalArgumentException | SecurityException | NoSuchMethodException e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+	
+	public static CommandSender getCommandExecutor(Object source) {
+		try {
+			Object proxyEntity = getField(source.getClass(), "k").get(source);
+			if(proxyEntity != null)
+				return (CommandSender) getMethod(getNmsClass("Entity"), "getBukkitEntity").invoke(getNmsClass("Entity").cast(proxyEntity));
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | SecurityException | ClassNotFoundException | NoSuchMethodException | NoSuchFieldException e) {
+			e.printStackTrace();
+		}
+		return null;
+	}
+	
+	public static Location getCommandLocation(Object source) {
+		try {
+			Object position = getMethod(source.getClass(), "getPosition").invoke(source);
+			double x = getField(position.getClass(), "x").getDouble(position);
+			double y = getField(position.getClass(), "y").getDouble(position);
+			double z = getField(position.getClass(), "z").getDouble(position);
+			
+			Object worldServer = getMethod(source.getClass(), "getWorld").invoke(source);
+			Object worldData = getField(getNmsClass("World"), "worldData").get(worldServer);
+			World world = Bukkit.getWorld((String) getMethod(getNmsClass("WorldData"), "getName").invoke(worldData));
+			
+			return new Location(world, x, y, z);
+		} catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | SecurityException | NoSuchMethodException | NoSuchFieldException | ClassNotFoundException e) {
+			e.printStackTrace();
+		}
+		return Bukkit.getWorlds().get(0).getSpawnLocation();
+	}
+	
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	// SECTION: Message                                                                                 //
+	//////////////////////////////////////////////////////////////////////////////////////////////////////
+	
+	public static void sendMessage(Object source, BaseComponent message, boolean broadcast) {
+		try {
+			Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
+			Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
+			Method a = getMethod(ChatSerializer, "a", String.class);
+			Object object = a.invoke(null, ComponentSerializer.toString(message));
+			getMethod(source.getClass(), "sendMessage", IChatBaseComponent, boolean.class).invoke(source, object, broadcast);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void broadcastMessage(Object source, CommandSender sender, TranslatableMessage message, String... args) {
+		sendMessage(source, new TextComponent(message.getMessage(sender, args)), false);
+		try {
+			Object base = getField(source.getClass(), "base").get(source);
+			Method shouldBroadcastCommands = getMethod(getNmsClass("ICommandListener"), "shouldBroadcastCommands");
+			Field j = getField(source.getClass(), "j");
+			j.setAccessible(true);
+			
+			if ((boolean) shouldBroadcastCommands.invoke(base) && !j.getBoolean(source)) {
+				
+				String name = sender instanceof ConsoleCommandSender ? "Server" : sender.getName();
+				
+				if (Bukkit.getWorlds().get(0).getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) {
+					for (Player player : Bukkit.getOnlinePlayers())
+						if (!player.equals(sender) && player.hasPermission("minecraft.admin.command_feedback")) {
+							TranslatableComponent component = new TranslatableComponent("chat.type.admin");
+							component.setColor(ChatColor.GRAY);
+							component.setItalic(true);
+							component.addWith(name);
+							component.addWith(message.getMessage(player, args));
+							player.spigot().sendMessage(component);
+						}
+				}
+				
+				if (!(sender instanceof ConsoleCommandSender) && Bukkit.getWorlds().get(0).getGameRuleValue(GameRule.LOG_ADMIN_COMMANDS)) {
+					if (!Class.forName("org.spigotmc.SpigotConfig").getField("silentCommandBlocks").getBoolean(null)) {
+						TranslatableComponent component = new TranslatableComponent("chat.type.admin");
+						component.addWith(name);
+						component.addWith(message.getMessage(Bukkit.getConsoleSender(), args));
+						
+						Field i = getField(source.getClass(), "i");
+						i.setAccessible(true);
+						
+						Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
+						Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
+						Method a = getMethod(ChatSerializer, "a", String.class);
+						Object object = a.invoke(null, ComponentSerializer.toString(component));
+						getMethod(getNmsClass("ICommandListener"), "sendMessage", IChatBaseComponent).invoke(i.get(source), object);
+					}
+				}
+				
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
+	public static void sendFailureMessage(Object source, BaseComponent message) {
+		try {
+			message.setColor(ChatColor.RED);
+			Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
+			Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
+			Method a = getMethod(ChatSerializer, "a", String.class);
+			Object object = a.invoke(null, ComponentSerializer.toString(message));
+			getMethod(source.getClass(), "sendFailureMessage", IChatBaseComponent).invoke(source, object);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -410,25 +487,6 @@ public final class Reflector {
 			result = clazz.getDeclaredConstructor(parameterTypes);
 			result.setAccessible(true);
 			constructors.put(key, result);
-			return result;
-		}
-	}
-	
-	/** Gets a method.
-	 * @param clazz the class where is the method
-	 * @param name the name of the method
-	 * @return the Method object for the specified method in this class
-	 * @throws NoSuchMethodException if a method with the specified name is not found
-	 * @throws SecurityException
-	 */
-	public static Method getMethod(Class<?> clazz, String name) throws NoSuchMethodException, SecurityException {
-		ClassCache key = new ClassCache(clazz, name);
-		if(methods.containsKey(key)) return methods.get(key);
-		else {
-			Method result = null;
-			result = clazz.getDeclaredMethod(name);
-			result.setAccessible(true);
-			methods.put(key, result);
 			return result;
 		}
 	}

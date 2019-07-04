@@ -14,7 +14,7 @@ import java.util.TimerTask;
 
 import org.bukkit.configuration.file.YamlConfiguration;
 
-/** Represents a file containing datas */
+/** Represents a file containing data */
 public class DataFile {
 	
 	protected final static List<FileCache<YamlConfiguration>> yamlConfigurationFiles = new ArrayList<FileCache<YamlConfiguration>>();
@@ -58,7 +58,7 @@ public class DataFile {
 	protected final File file;
 	
 	/**
-	 * Represents a file containing datas
+	 * Represents a file containing data
 	 * @param path the path of the file
 	 */
 	public DataFile(String path) {
@@ -66,7 +66,7 @@ public class DataFile {
 	}
 	
 	/**
-	 * Represents a file containing datas
+	 * Represents a file containing data
 	 * @param file the file
 	 */
 	public DataFile(File file) {

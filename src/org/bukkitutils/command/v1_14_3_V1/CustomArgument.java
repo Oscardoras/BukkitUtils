@@ -1,9 +1,5 @@
-package org.bukkitutils.command.v1_14_3_V1.arguments;
+package org.bukkitutils.command.v1_14_3_V1;
 
-import java.util.Collection;
-
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
 import org.bukkitutils.io.TranslatableMessage;
 
 import com.mojang.brigadier.arguments.StringArgumentType;
@@ -17,7 +13,7 @@ public abstract class CustomArgument<T> extends Argument<String> {
 	
 	/**
 	 * Represents a custom argument for a Mojang Brigadier command
-	 * @param error an error to send if getArg returns null. A null value will send a unknow argument error message
+	 * @param error an error message to send if getArg returns null. A null value will send an unknown error message
 	 */
 	public CustomArgument(TranslatableMessage error) {
 		super(StringArgumentType.word());
@@ -32,21 +28,17 @@ public abstract class CustomArgument<T> extends Argument<String> {
 		return error;
 	}
 	
-	@Override
-	public abstract Collection<String> getSuggestions(CommandSender executor, Location location, Object[] args);
-	
 	/**
 	 * The argument parser.
 	 * @param arg the string argument written by the command sender
-	 * @param executor the CommandSender object representing the executor of this command
-	 * @param location the location where this command is performed
+	 * @param cmd the data for the argument parser
 	 * @throws CommandSyntaxException if the command is malformed
-	 * @throws Exception if an exception occure
+	 * @throws Exception if an exception occurs
 	 */
-	public abstract T getArg(String arg, CommandSender executor, Location location) throws Exception;
+	protected abstract T parse(String arg, SuggestedCommand cmd) throws Exception;
 	
 	@Override
-	public final String getArg(String key, CommandContext<?> context, CommandSender executor, Location location) {
+	protected final String parse(String key, CommandContext<?> context) {
 		return context.getArgument(key, String.class);
 	}
 	

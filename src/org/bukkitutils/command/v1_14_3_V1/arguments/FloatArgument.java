@@ -1,7 +1,6 @@
 package org.bukkitutils.command.v1_14_3_V1.arguments;
 
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -32,7 +31,7 @@ public class FloatArgument extends Argument<Float> {
 	}
 	
 	@Override
-	public Float getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	protected Float parse(String key, CommandContext<?> context) throws Exception {
 		return context.getArgument(key, float.class);
 	}
 	

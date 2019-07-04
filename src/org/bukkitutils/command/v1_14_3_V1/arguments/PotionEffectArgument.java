@@ -2,9 +2,8 @@ package org.bukkitutils.command.v1_14_3_V1.arguments;
 
 import java.lang.reflect.Constructor;
 
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
 import org.bukkit.potion.PotionEffectType;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
@@ -18,7 +17,7 @@ public class PotionEffectArgument extends Argument<PotionEffectType> {
 	}
 	
 	@Override
-	public PotionEffectType getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	protected PotionEffectType parse(String key, CommandContext<?> context) throws Exception {
 		Constructor<?> craftPotionType = Reflector.getObcClass("potion.CraftPotionEffectType").getConstructor(Reflector.getNmsClass("MobEffectList"));
 		Object mobEffect = Reflector.getMethod(Reflector.getNmsClass("ArgumentMobEffect"), "a", CommandContext.class, String.class).invoke(null, context, key);
 		return (PotionEffectType) craftPotionType.newInstance(mobEffect);

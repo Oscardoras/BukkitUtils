@@ -1,7 +1,4 @@
-package org.bukkitutils.command.v1_14_3_V1.arguments;
-
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
+package org.bukkitutils.command.v1_14_3_V1;
 
 import com.mojang.brigadier.context.CommandContext;
 
@@ -29,7 +26,7 @@ public class LiteralArgument extends Argument<Object> {
 	}
 
 	@Override
-	public Object getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	protected Object parse(String key, CommandContext<?> context) throws Exception {
 		return null;
 	}
 	

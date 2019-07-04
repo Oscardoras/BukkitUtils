@@ -4,16 +4,15 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 
-/** Represents an enity selector argument for a Mojang Brigadier command */
+/** Represents an entity selector argument for a Mojang Brigadier command */
 public class EntitySelectorArgument extends Argument<Object> {
 	
 	/** Represents an an entity selector type */
@@ -44,7 +43,7 @@ public class EntitySelectorArgument extends Argument<Object> {
 	protected final EntitySelector selector;
 	
 	/**
-	 * Represents an enity selector argument for a Mojang Brigadier command
+	 * Represents an entity selector argument for a Mojang Brigadier command
 	 * @param selector the entity selector type for this argument
 	 */
 	public EntitySelectorArgument(EntitySelector selector) {
@@ -62,7 +61,7 @@ public class EntitySelectorArgument extends Argument<Object> {
 	}
 	
 	@Override
-	public Object getArg(String key, CommandContext<?> context, CommandSender executor, Location location) throws Exception {
+	protected Object parse(String key, CommandContext<?> context) throws Exception {
 		switch(getEntitySelector()) {
 			case MANY_ENTITIES:
 			default:

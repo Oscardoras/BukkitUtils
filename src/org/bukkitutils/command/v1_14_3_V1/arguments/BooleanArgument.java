@@ -1,7 +1,6 @@
 package org.bukkitutils.command.v1_14_3_V1.arguments;
 
-import org.bukkit.Location;
-import org.bukkit.command.CommandSender;
+import org.bukkitutils.command.v1_14_3_V1.Argument;
 
 import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.context.CommandContext;
@@ -15,7 +14,7 @@ public class BooleanArgument extends Argument<Boolean> {
 	}
 	
 	@Override
-	public Boolean getArg(String key, CommandContext<?> context, CommandSender executor, Location location) {
+	protected Boolean parse(String key, CommandContext<?> context) {
 		return context.getArgument(key, boolean.class);
 	}
 	
