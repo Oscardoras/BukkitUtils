@@ -10,10 +10,10 @@ import com.mojang.brigadier.context.CommandContext;
 import net.md_5.bungee.api.chat.BaseComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 
-/** Represents a chat component argument for a Mojang Brigadier command */
+/** Represents a chat component argument for a Mojang Brigadier command. */
 public class ChatComponentArgument extends Argument<BaseComponent[]> {
 	
-	/** Represents a chat component argument for a Mojang Brigadier command */
+	/** Represents a chat component argument for a Mojang Brigadier command. */
 	public ChatComponentArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentChatComponent"));
 	}

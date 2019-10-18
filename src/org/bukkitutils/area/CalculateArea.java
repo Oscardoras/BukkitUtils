@@ -2,57 +2,76 @@ package org.bukkitutils.area;
 
 import org.bukkit.Location;
 
-/** A tool to calculate an area coordinates */
+import com.sun.istack.internal.NotNull;
+
+/** A tool to calculate the coordinates of an area. */
 public class CalculateArea {
 	
 	protected final Location positive;
 	protected final Location negative;
 	
 	/**
-	 * A tool to calculate an area coordinates
-	 * @param positive the first location object
-	 * @param negative the second location object
+	 * A tool to calculate the coordinates of an area.
+	 * @param first the first location object
+	 * @param second the second location object
 	 */
-	public CalculateArea(Location positive, Location negative) {
-		this.positive = new Location(positive.getWorld(), 0, 0, 0);
-		this.negative = new Location(positive.getWorld(), 0, 0, 0);
-		if (positive.getX() >= negative.getX()) {
-			this.positive.setX(positive.getX());
-			this.negative.setX(negative.getX());
+	public CalculateArea(@NotNull Location first, @NotNull Location second) {
+		this.positive = new Location(first.getWorld(), 0, 0, 0);
+		this.negative = new Location(first.getWorld(), 0, 0, 0);
+		if (first.getX() >= second.getX()) {
+			this.positive.setX(first.getX());
+			this.negative.setX(second.getX());
 		} else {
-			this.positive.setX(negative.getX());
-			this.negative.setX(positive.getX());
+			this.positive.setX(second.getX());
+			this.negative.setX(first.getX());
 		}
-		if (positive.getY() >= negative.getY()) {
-			this.positive.setY(positive.getY());
-			this.negative.setY(negative.getY());
+		if (first.getY() >= second.getY()) {
+			this.positive.setY(first.getY());
+			this.negative.setY(second.getY());
 		} else {
-			this.positive.setY(negative.getY());
-			this.negative.setY(positive.getY());
+			this.positive.setY(second.getY());
+			this.negative.setY(first.getY());
 		}
-		if (positive.getZ() >= negative.getZ()) {
-			this.positive.setZ(positive.getZ());
-			this.negative.setZ(negative.getZ());
+		if (first.getZ() >= second.getZ()) {
+			this.positive.setZ(first.getZ());
+			this.negative.setZ(second.getZ());
 		} else {
-			this.positive.setZ(negative.getZ());
-			this.negative.setZ(positive.getZ());
+			this.positive.setZ(second.getZ());
+			this.negative.setZ(first.getZ());
 		}
 	}
 	
 	/**
-	 * Gets the positive location
+	 * Gets the positive location.
 	 * @return the positive location
 	 */
-	public Location getPositive() {
+	public @NotNull Location getPositive() {
 		return positive;
 	}
 	
 	/**
-	 * Gets the negative location
+	 * Gets the negative location.
 	 * @return the negative location
 	 */
-	public Location getNegative() {
+	public @NotNull Location getNegative() {
 		return negative;
+	}
+	
+	@Override
+	public boolean equals(Object object) {
+		if (object != null && object instanceof CalculateArea) {
+			CalculateArea o = (CalculateArea) object;
+			return positive.equals(o.positive) && negative.equals(o.negative);
+		}
+		return false;
+	}
+	
+	@Override
+	public int hashCode() {
+		int hash = 1;
+		hash *= 27 + positive.hashCode();
+		hash *= 14 + negative.hashCode();
+		return hash;
 	}
 	
 }

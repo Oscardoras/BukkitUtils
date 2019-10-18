@@ -5,10 +5,10 @@ import org.bukkitutils.command.v1_14_3_V1.Argument;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents a greedy string argument for a Mojang Brigadier command */
+/** Represents a greedy string argument for a Mojang Brigadier command. */
 public class GreedyStringArgument extends Argument<String> {
 	
-	/** Represents a greedy string argument for a Mojang Brigadier command */
+	/** Represents a greedy string argument for a Mojang Brigadier command. */
 	public GreedyStringArgument() {
 		super(StringArgumentType.greedyString());
 	}

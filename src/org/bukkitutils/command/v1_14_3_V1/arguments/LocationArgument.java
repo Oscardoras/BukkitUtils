@@ -6,10 +6,12 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
+import com.sun.istack.internal.NotNull;
 
-/** Represents a location argument for a Mojang Brigadier command */
+/** Represents a location argument for a Mojang Brigadier command. */
 public class LocationArgument extends Argument<Location> {
 
+	/** Represents an location selector type. */
 	public enum LocationType {
 		/** Represents the integer coordinates of a block. */
 		BLOCK_LOCATION, 
@@ -18,16 +20,16 @@ public class LocationArgument extends Argument<Location> {
 		PRECISE_LOCATION;
 	}
 	
-	/** Represents a precise location argument for a Mojang Brigadier command */
+	/** Represents a precise location argument for a Mojang Brigadier command. */
 	public LocationArgument() {
 		this(LocationType.PRECISE_LOCATION);
 	}
 	
 	/**
-	 * Represents a location argument for a Mojang Brigadier command
+	 * Represents a location argument for a Mojang Brigadier command.
 	 * @param type the location type
 	 */
-	public LocationArgument(LocationType type) {
+	public LocationArgument(@NotNull LocationType type) {
 		super(new Object() {
 			public ArgumentType<?> getRawType() {
 				switch(type) {
@@ -48,7 +50,7 @@ public class LocationArgument extends Argument<Location> {
 	 * Gets the location type for this argument.
 	 * @return the location type for this argument
 	 */
-	public LocationType getLocationType() {
+	public @NotNull LocationType getLocationType() {
 		return locationType;
 	}
 	

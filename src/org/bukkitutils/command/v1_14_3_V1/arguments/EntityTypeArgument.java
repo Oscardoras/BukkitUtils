@@ -6,10 +6,10 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents an entity type argument for a Mojang Brigadier command */
+/** Represents an entity type argument for a Mojang Brigadier command. */
 public class EntityTypeArgument extends Argument<EntityType> {
 	
-	/** Represents an entity type argument for a Mojang Brigadier command */
+	/** Represents an entity type argument for a Mojang Brigadier command. */
 	public EntityTypeArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentEntitySummon"));
 	}

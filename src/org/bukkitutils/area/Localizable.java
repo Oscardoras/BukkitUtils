@@ -6,40 +6,43 @@ import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.World;
 
-/** Represents an area */
+import com.sun.istack.internal.NotNull;
+
+/** Represents an area. */
 public interface Localizable {
     
 	/**
-	 * Gets the world of the area
+	 * Gets the world of the area.
 	 * @return the world
 	 */
-    public World getWorld();
+    public @NotNull World getWorld();
 	
     /**
-	 * Gets the positive location of the area
+	 * Gets the positive location of the area.
 	 * @return the positive location
 	 */
-	public Location getPositive();
+	public @NotNull Location getPositive();
 	
 	/**
-	 * Gets the negative location of the area
+	 * Gets the negative location of the area.
 	 * @return the negative location
 	 */
-	public Location getNegative();
+	public @NotNull Location getNegative();
 	
 	/**
-	 * Sets the locations of the area
+	 * Sets the locations of the area.
 	 * @param positive the first location object
 	 * @param negative the second location object
 	 */
-	public void setLocations(Location positive, Location negative);
+	public void setLocations(@NotNull Location positive, @NotNull Location negative);
 	
 	/**
-	 * Gets all the given area containing the location
+	 * Gets all the given areas containing the location.
 	 * @param location the location where search areas
-	 * @param inWorld a Localizable list 
+	 * @param list a Localizable list
+	 * @return the areas containing the location
 	 */
-	public static <T extends Localizable> List<T> getLocationLocalizables(Location location, List<T> list) {
+	public static @NotNull <T extends Localizable> List<T> getLocationLocalizables(@NotNull Location location, @NotNull List<T> list) {
 		List<T> localizables = new ArrayList<T>();
 		World world = location.getWorld();
 		int x = location.getBlockX();

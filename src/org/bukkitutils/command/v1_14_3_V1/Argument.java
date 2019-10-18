@@ -10,8 +10,10 @@ import org.bukkitutils.io.TranslatableMessage;
 import com.mojang.brigadier.arguments.ArgumentType;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.sun.istack.internal.NotNull;
+import com.sun.istack.internal.Nullable;
 
-/** Represents an argument for a Mojang Brigadier command */
+/** Represents an argument for a Mojang Brigadier command. */
 public abstract class Argument<T> {
 	
 	private final ArgumentType<?> rawType;
@@ -19,10 +21,10 @@ public abstract class Argument<T> {
 	private Permission permission = null;
 	
 	/**
-	 * Represents an argument for a Mojang Brigadier command
+	 * Represents an argument for a Mojang Brigadier command.
 	 * @param rawType the raw type for this argument
 	 */
-	protected Argument(ArgumentType<?> rawType) {
+	protected Argument(@NotNull ArgumentType<?> rawType) {
 		this.rawType = rawType;
 	}
 	
@@ -31,16 +33,16 @@ public abstract class Argument<T> {
 	 * @return the raw type for this argument
 	 */
 	@SuppressWarnings("unchecked")
-	protected final <R> ArgumentType<R> getRawType() {
+	protected final @NotNull <R> ArgumentType<R> getRawType() {
 		return (ArgumentType<R>) rawType;
 	}
 	
 	/**
 	 * Sets a suggestions provider for this argument.
-	 * @param suggestionsProvider the suggestions provider
+	 * @param suggestionsProvider the suggestions provider to set
 	 * @return this argument
 	 */
-	public Argument<T> withSuggestionsProvider(SuggestionsProvider suggestionsProvider) {
+	public @NotNull Argument<T> withSuggestionsProvider(@Nullable SuggestionsProvider suggestionsProvider) {
 		this.suggestionsProvider = suggestionsProvider;
 		return this;
 	}
@@ -49,7 +51,7 @@ public abstract class Argument<T> {
 	 * Gets the suggestions provider for this argument.
 	 * @return the suggestions provider for this argument
 	 */
-	public final SuggestionsProvider getSugesstionsProvider() {
+	public final @Nullable  SuggestionsProvider getSugesstionsProvider() {
 		return suggestionsProvider;
 	}
 	
@@ -58,7 +60,7 @@ public abstract class Argument<T> {
 	 * @param permission the permission to set
 	 * @return this argument
 	 */
-	public final Argument<T> withPermission(Permission permission) {
+	public final @NotNull Argument<T> withPermission(@Nullable  Permission permission) {
 		this.permission = permission;
 		return this;
 	}
@@ -67,7 +69,7 @@ public abstract class Argument<T> {
 	 * Gets the permission for this argument.
 	 * @return the permission for this argument
 	 */
-	public final Permission getPermission() {
+	public final @Nullable Permission getPermission() {
 		return permission;
 	}
 	
@@ -78,7 +80,7 @@ public abstract class Argument<T> {
 	 * @throws CommandSyntaxException if the command is malformed
 	 * @throws Exception if an exception occurs
 	 */
-	protected abstract T parse(String key, CommandContext<?> context) throws Exception;
+	protected abstract @Nullable T parse(@NotNull String key, @NotNull CommandContext<?> context) throws Exception;
 	
 	
 	@FunctionalInterface
@@ -88,8 +90,9 @@ public abstract class Argument<T> {
 		 * @param cmd the data for the suggestion provider
 		 * @return the suggestions
 		 * @throws CommandSyntaxException if the command is malformed
+		 * @throws Exception if another exception occurs
 		 */
-		Collection<String> run(SuggestedCommand cmd) throws CommandSyntaxException;
+		Collection<String> run(@NotNull SuggestedCommand cmd) throws Exception;
 	}
 	
 	public static class SuggestedCommand {
@@ -114,7 +117,7 @@ public abstract class Argument<T> {
 		 * Gets the command executor.
 		 * @return the command executor
 		 */
-		public CommandSender getExecutor() {
+		public @NotNull CommandSender getExecutor() {
 			return executor;
 		}
 		
@@ -122,7 +125,7 @@ public abstract class Argument<T> {
 		 * Gets the command location.
 		 * @return the command location
 		 */
-		public Location getLocation() {
+		public @NotNull Location getLocation() {
 			return location;
 		}
 		
@@ -131,7 +134,7 @@ public abstract class Argument<T> {
 		 * @param index the index of the argument
 		 * @return the command argument
 		 */
-		public Object getArg(int index) {
+		public @Nullable Object getArg(int index) {
 			return args[index];
 		}
 		
@@ -139,25 +142,25 @@ public abstract class Argument<T> {
 		 * Gets the sender language.
 		 * @return the sender language
 		 */
-		public String getLanguage() {
+		public @NotNull String getLanguage() {
 			return TranslatableMessage.getLanguage(sender);
 		}
 		
 		/**
-		 * Checks if the sender has the permission
+		 * Checks if the sender has the permission.
 		 * @param permission the permission to check
 		 * @return true if the sender has the permission
 		 */
-		public boolean hasPermission(String permission) {
+		public boolean hasPermission(@NotNull String permission) {
 			return sender.hasPermission(permission);
 		}
 		
 		/**
-		 * Checks if the sender has the permission
+		 * Checks if the sender has the permission.
 		 * @param permission the permission to check
 		 * @return true if the sender has the permission
 		 */
-		public boolean hasPermission(Permission permission) {
+		public boolean hasPermission(@NotNull Permission permission) {
 			return sender.hasPermission(permission);
 		}
 		

@@ -7,12 +7,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.bukkitutils.command.v1_14_3_V1.CustomArgument;
 
-/** Represents an offline player argument for a Mojang Brigadier command */
+/** Represents an offline player argument for a Mojang Brigadier command. */
 public class OfflinePlayerArgument extends CustomArgument<OfflinePlayer> {
 	
-	/** Represents an offline player argument for a Mojang Brigadier command */
+	/** Represents an offline player argument for a Mojang Brigadier command. */
 	public OfflinePlayerArgument() {
-		super(null);
 		withSuggestionsProvider((cmd) -> {
 			List<String> list = new ArrayList<String>();
 			for (OfflinePlayer offlinePlayer : Bukkit.getOfflinePlayers()) list.add(offlinePlayer.getName());

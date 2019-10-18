@@ -8,10 +8,10 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents an enchantment argument for a Mojang Brigadier command */
+/** Represents an enchantment argument for a Mojang Brigadier command. */
 public class EnchantmentArgument extends Argument<Enchantment> {
 	
-	/** Represents an enchantment argument for a Mojang Brigadier command */
+	/** Represents an enchantment argument for a Mojang Brigadier command. */
 	public EnchantmentArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentEnchantment"));
 	}

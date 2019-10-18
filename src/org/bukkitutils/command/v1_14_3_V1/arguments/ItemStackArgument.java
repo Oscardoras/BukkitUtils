@@ -8,10 +8,10 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents an item stack argument for a Mojang Brigadier command */
+/** Represents an item stack argument for a Mojang Brigadier command. */
 public class ItemStackArgument extends Argument<ItemStack> {
 	
-	/** Represents an item stack argument for a Mojang Brigadier command */
+	/** Represents an item stack argument for a Mojang Brigadier command. */
 	public ItemStackArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentItemStack"));
 	}

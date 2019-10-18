@@ -12,12 +12,14 @@ import java.util.jar.JarFile;
 
 import org.bukkit.plugin.java.JavaPlugin;
 
-/** Represents a Bukkit plugin */
+import com.sun.istack.internal.NotNull;
+
+/** Represents a Bukkit plugin. */
 public class BukkitPlugin extends JavaPlugin {
 	
 	private final Map<String, Properties> translations = new HashMap<String, Properties>();
 	
-	/** Represents a Bukkit plugin */
+	/** Represents a Bukkit plugin. */
 	public BukkitPlugin() {
 		try {
 			JarFile jarFile = new JarFile(getFile());
@@ -41,10 +43,10 @@ public class BukkitPlugin extends JavaPlugin {
 	}
 	
 	/**
-	 * Gets translation files for this plugin
-	 * @return a map containing the translation properties file for each set languages
+	 * Gets translation files for this plugin.
+	 * @return a map containing the translation properties files for each language defined
 	 */
-	public Map<String, Properties> getTranslations() {
+	public @NotNull Map<String, Properties> getTranslations() {
 		return translations;
 	}
 	

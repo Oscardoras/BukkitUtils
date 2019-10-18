@@ -5,8 +5,8 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,10 +38,10 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.builder.RequiredArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
-import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
 import com.mojang.brigadier.suggestion.SuggestionProvider;
 import com.mojang.brigadier.tree.CommandNode;
 import com.mojang.brigadier.tree.LiteralCommandNode;
+import com.sun.istack.internal.NotNull;
 
 import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.BaseComponent;
@@ -49,62 +49,25 @@ import net.md_5.bungee.api.chat.TextComponent;
 import net.md_5.bungee.api.chat.TranslatableComponent;
 import net.md_5.bungee.chat.ComponentSerializer;
 
-/** Contains methods for arguments reflection */
+/** Contains methods for command reflection. */
 @SuppressWarnings({"rawtypes", "unchecked"})
 public final class Reflector {
 	private Reflector() {}
 	
 	
-	@SuppressWarnings("unused")
-	private static class ClassCache {
-		
-		private Class<?> clazz;
-		private String name;
-		
-		public ClassCache(Class<?> clazz, String name) {
-			this.clazz = clazz;
-			this.name = name;
-		}
-		
-		public Class<?> getClazz() {
-			return clazz;
-		}
-		
-		public String getName() {
-			return name;
-		}
-		
-	}
-
-	//Cache maps
-	private static Map<String, Class<?>> nmsClasses;
-	private static Map<String, Class<?>> obcClasses;
-	private static Map<ClassCache, Constructor> constructors;
-	private static Map<ClassCache, Method> methods;
-	private static Map<ClassCache, Field> fields;
-	
-	private static String obcPackageName = null;
-	private static String nmsPackageName = null;
+	private static String obcPackageName;
+	private static String nmsPackageName;
 	
 	private static CommandDispatcher dispatcher;
 	
 	static {
 		try {
-			if(Package.getPackage("com.mojang.brigadier") == null) {
+			if(Package.getPackage("com.mojang.brigadier") == null)
 				throw new ClassNotFoundException("Brigadier not found, plugin commands are not compatible with this version");
-			}
 			
-			//Setup NMS
 			Object server = Bukkit.getServer().getClass().getDeclaredMethod("getServer").invoke(Bukkit.getServer());
 			nmsPackageName = server.getClass().getPackage().getName();
 			obcPackageName = Bukkit.getServer().getClass().getPackage().getName();
-			
-			//Everything from this line will use getNMSClass(), so we initialize our cache here
-			nmsClasses = new HashMap<>();
-			obcClasses = new HashMap<>();
-			constructors = new HashMap<>();
-			methods = new HashMap<>();
-			fields = new HashMap<>();
 			
 			dispatcher = (CommandDispatcher) getNmsClass("CommandDispatcher").getDeclaredMethod("a").invoke(getField(getNmsClass("MinecraftServer"), "commandDispatcher").get(server)); 
 		} catch(Exception e) {
@@ -152,14 +115,14 @@ public final class Reflector {
 					if (!(executor instanceof Player)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.player");
 						message.setColor(ChatColor.RED);
-						sendFailureMessage(source, message);
+						sendFailureMessage(source, sender, new BaseComponent[] {message});
 						return 0;
 					}
 				} else if (executorType == CommandExecutorType.ENTITY) {
 					if (!(executor instanceof Entity)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.entity");
 						message.setColor(ChatColor.RED);
-						sendFailureMessage(source, message);
+						sendFailureMessage(source, sender, new BaseComponent[] {message});
 						return 0;
 					}
 				}
@@ -176,7 +139,6 @@ public final class Reflector {
 					} catch (InvocationTargetException e) {
 						Throwable e2 = e.getCause();
 						while (e2 instanceof InvocationTargetException) e2 = e2.getCause();
-						
 						if (e2 instanceof CommandSyntaxException) throw (CommandSyntaxException) e2;
 						else {
 							e2.printStackTrace();
@@ -239,7 +201,7 @@ public final class Reflector {
 		        }        
 		        
 		        //Link command name to first argument and register        
-		       resultantNode = dispatcher.register((LiteralArgumentBuilder) getLiteralArgumentBuilder(name, permission).then(outer));
+		        resultantNode = dispatcher.register((LiteralArgumentBuilder) getLiteralArgumentBuilder(name, permission).then(outer));
 			}
 			
 			//Register aliases
@@ -275,22 +237,9 @@ public final class Reflector {
 			String key = entry.getKey();
 			Object a = argument.parse(key, context);
 			
-			if (argument instanceof CustomArgument) {
-				
-				CustomArgument customArgument = (CustomArgument) argument;
-				arg = customArgument.parse((String) a, new SuggestedCommand(context.getSource(), sender, executor, location, args.toArray(new Object[args.size()])));
-				if (arg == null) {
-					TranslatableMessage error = customArgument.getMessage();
-					if (error != null) {
-						throw new SimpleCommandExceptionType(new com.mojang.brigadier.Message() {
-							public String getString() {
-								return ChatColor.RED + error.getMessage(sender, (String) a);
-							}
-						}).create();
-					} else throw CommandSyntaxException.BUILT_IN_EXCEPTIONS.dispatcherUnknownArgument().create();
-				}
-				
-			} else arg = a;
+			if (argument instanceof CustomArgument)
+				arg = ((CustomArgument) argument).parse((String) a, new SuggestedCommand(context.getSource(), sender, executor, location, args.toArray(new Object[args.size()])));
+			else arg = a;
 			
 			args.add(arg);
 		}
@@ -329,14 +278,23 @@ public final class Reflector {
 				for(Entry<String, Argument<?>> entry : arguments.entrySet()) {
 					try {
 						populateArgs(entry, context, sender, executor, location, args);
-					} catch (Exception e) {}
+					} catch (Exception e) {
+						args.add(null);
+					}
 				}
 				
-				Collection<String> list =  suggestionsProvider.run(new SuggestedCommand(source, sender, executor, location, args.toArray(new Object[args.size()])));
+				Collection<String> list;
+				try {
+					list =  suggestionsProvider.run(new SuggestedCommand(source, sender, executor, location, args.toArray(new Object[args.size()])));
+				} catch (CommandSyntaxException e) {
+					throw e;
+				} catch (Exception e) {
+					e.printStackTrace();
+					list = null;
+				}
 				if (list != null) {
 					String remaining = builder.getRemaining().toLowerCase();
-					for (String suggestion : list)
-						if (suggestion.toLowerCase().startsWith(remaining)) builder.suggest(suggestion);
+					for (String suggestion : list) if (suggestion.toLowerCase().startsWith(remaining)) builder.suggest(suggestion);
 				}
 				return builder.buildFuture();
 			};
@@ -352,7 +310,11 @@ public final class Reflector {
 	// SECTION: CommandSender                                                                           //
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public static CommandSender getCommandSender(Object source) {
+	/** Gets a command sender object.
+	 * @param source the source object
+	 * @return the command sender object for the source object
+	 */
+	public static @NotNull CommandSender getCommandSender(@NotNull Object source) {
 		try {
 			return (CommandSender) getMethod(source.getClass(), "getBukkitSender").invoke(source);
 		} catch (InvocationTargetException e) {
@@ -363,7 +325,11 @@ public final class Reflector {
 		}
 	}
 	
-	public static CommandSender getCommandExecutor(Object source) {
+	/** Gets a command executor object.
+	 * @param source the source object
+	 * @return the command executor object for the source object
+	 */
+	public static @NotNull CommandSender getCommandExecutor(@NotNull Object source) {
 		try {
 			Object proxyEntity = getField(source.getClass(), "k").get(source);
 			if(proxyEntity != null)
@@ -374,7 +340,11 @@ public final class Reflector {
 		return null;
 	}
 	
-	public static Location getCommandLocation(Object source) {
+	/** Gets a location object.
+	 * @param source the source object
+	 * @return the location object for the source object
+	 */
+	public static @NotNull Location getCommandLocation(@NotNull Object source) {
 		try {
 			Object position = getMethod(source.getClass(), "getPosition").invoke(source);
 			double x = getField(position.getClass(), "x").getDouble(position);
@@ -396,76 +366,136 @@ public final class Reflector {
 	// SECTION: Message                                                                                 //
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
 	
-	public static void sendMessage(Object source, BaseComponent message, boolean broadcast) {
+	/** Sends a command message.
+	 * @param source the source object to send the message
+	 * @param sender the command sender to send the message
+	 * @param message an array, which can contain BaseComponent, TranslatableMessage and any other type of object
+	 * @param list an integer to replace %list% in translatable messages. Set -1 to leave default
+	 */
+	public static void sendMessage(@NotNull Object source, @NotNull CommandSender sender, @NotNull Object[] message, int list) {
 		try {
 			Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
 			Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
 			Method a = getMethod(ChatSerializer, "a", String.class);
-			Object object = a.invoke(null, ComponentSerializer.toString(message));
-			getMethod(source.getClass(), "sendMessage", IChatBaseComponent, boolean.class).invoke(source, object, broadcast);
+			Object object = a.invoke(null, ComponentSerializer.toString(getBaseComponents(TranslatableMessage.getLanguage(sender), message, null, list)));
+			getMethod(source.getClass(), "sendMessage", IChatBaseComponent, boolean.class).invoke(source, object, false);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void broadcastMessage(Object source, CommandSender sender, TranslatableMessage message, String... args) {
-		sendMessage(source, new TextComponent(message.getMessage(sender, args)), false);
-		try {
-			Object base = getField(source.getClass(), "base").get(source);
-			Method shouldBroadcastCommands = getMethod(getNmsClass("ICommandListener"), "shouldBroadcastCommands");
-			Field j = getField(source.getClass(), "j");
-			j.setAccessible(true);
+	/** Broadcasts a command message.
+	 * @param source the source object to send the message
+	 * @param sender the command sender to send the message
+	 * @param message an array, which can contain BaseComponent, TranslatableMessage and any other type of object
+	 */
+	public static void broadcastMessage(@NotNull Object source, @NotNull CommandSender sender, @NotNull Object[] message) {
+		boolean found = false;
+		for (Object msg : message) if (msg instanceof TranslatableMessage) {
+			found = true;
+			break;
+		}
+		
+		if (!found) {
+			try {
+				Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
+				Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
+				Method a = getMethod(ChatSerializer, "a", String.class);
+				Object object = a.invoke(null, ComponentSerializer.toString((BaseComponent[]) message));
+				getMethod(source.getClass(), "sendMessage", IChatBaseComponent, boolean.class).invoke(source, object, true);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		} else {
+			sendMessage(source, sender, message, -1);
 			
-			if ((boolean) shouldBroadcastCommands.invoke(base) && !j.getBoolean(source)) {
+			try {
+				Object base = getField(source.getClass(), "base").get(source);
+				Method shouldBroadcastCommands = getMethod(getNmsClass("ICommandListener"), "shouldBroadcastCommands");
+				Field j = getField(source.getClass(), "j");
+				j.setAccessible(true);
 				
-				String name = sender instanceof ConsoleCommandSender ? "Server" : sender.getName();
-				
-				if (Bukkit.getWorlds().get(0).getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) {
-					for (Player player : Bukkit.getOnlinePlayers())
-						if (!player.equals(sender) && player.hasPermission("minecraft.admin.command_feedback")) {
+				if ((boolean) shouldBroadcastCommands.invoke(base) && !j.getBoolean(source)) {
+					
+					String name = sender instanceof ConsoleCommandSender ? "Server" : sender.getName();
+					
+					if (Bukkit.getWorlds().get(0).getGameRuleValue(GameRule.SEND_COMMAND_FEEDBACK)) {
+						for (Player player : Bukkit.getOnlinePlayers())
+							if (!player.equals(sender) && player.hasPermission("minecraft.admin.command_feedback")) {
+								TranslatableComponent component = new TranslatableComponent("chat.type.admin");
+								component.setColor(ChatColor.GRAY);
+								component.setItalic(true);
+								component.addWith(name);
+								BaseComponent b = new TextComponent("");
+								b.setExtra(Arrays.asList(getBaseComponents(TranslatableMessage.getLanguage(player), message, ChatColor.GRAY, -1)));
+								component.addWith(b);
+								
+								player.spigot().sendMessage(component);
+							}
+					}
+					
+					if (!(sender instanceof ConsoleCommandSender) && Bukkit.getWorlds().get(0).getGameRuleValue(GameRule.LOG_ADMIN_COMMANDS)) {
+						if (!Class.forName("org.spigotmc.SpigotConfig").getField("silentCommandBlocks").getBoolean(null)) {
 							TranslatableComponent component = new TranslatableComponent("chat.type.admin");
 							component.setColor(ChatColor.GRAY);
 							component.setItalic(true);
 							component.addWith(name);
-							component.addWith(message.getMessage(player, args));
-							player.spigot().sendMessage(component);
+							BaseComponent b = new TextComponent("");
+							b.setExtra(Arrays.asList(getBaseComponents(TranslatableMessage.getLanguage(Bukkit.getConsoleSender()), message, ChatColor.GRAY, -1)));
+							component.addWith(b);
+							
+							Field i = getField(source.getClass(), "i");
+							i.setAccessible(true);
+							
+							Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
+							Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
+							Method a = getMethod(ChatSerializer, "a", String.class);
+							Object object = a.invoke(null, ComponentSerializer.toString(component));
+							getMethod(getNmsClass("ICommandListener"), "sendMessage", IChatBaseComponent).invoke(i.get(source), object);
 						}
-				}
-				
-				if (!(sender instanceof ConsoleCommandSender) && Bukkit.getWorlds().get(0).getGameRuleValue(GameRule.LOG_ADMIN_COMMANDS)) {
-					if (!Class.forName("org.spigotmc.SpigotConfig").getField("silentCommandBlocks").getBoolean(null)) {
-						TranslatableComponent component = new TranslatableComponent("chat.type.admin");
-						component.addWith(name);
-						component.addWith(message.getMessage(Bukkit.getConsoleSender(), args));
-						
-						Field i = getField(source.getClass(), "i");
-						i.setAccessible(true);
-						
-						Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
-						Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
-						Method a = getMethod(ChatSerializer, "a", String.class);
-						Object object = a.invoke(null, ComponentSerializer.toString(component));
-						getMethod(getNmsClass("ICommandListener"), "sendMessage", IChatBaseComponent).invoke(i.get(source), object);
 					}
+					
 				}
-				
+			} catch (Exception e) {
+				e.printStackTrace();
 			}
+		}
+	}
+	
+	/** Sends a failure message.
+	 * @param source the source object to send the message
+	 * @param sender the command sender to send the message
+	 * @param message an array, which can contain BaseComponent, TranslatableMessage and any other type of object
+	 */
+	public static void sendFailureMessage(@NotNull Object source, @NotNull CommandSender sender, @NotNull Object[] message) {
+		try {
+			Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
+			Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
+			Method a = getMethod(ChatSerializer, "a", String.class);
+			Object object = a.invoke(null, ComponentSerializer.toString(getBaseComponents(TranslatableMessage.getLanguage(sender), message, ChatColor.RED, -1)));
+			getMethod(source.getClass(), "sendFailureMessage", IChatBaseComponent).invoke(source, object);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void sendFailureMessage(Object source, BaseComponent message) {
-		try {
-			message.setColor(ChatColor.RED);
-			Class<?> IChatBaseComponent = getNmsClass("IChatBaseComponent");
-			Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
-			Method a = getMethod(ChatSerializer, "a", String.class);
-			Object object = a.invoke(null, ComponentSerializer.toString(message));
-			getMethod(source.getClass(), "sendFailureMessage", IChatBaseComponent).invoke(source, object);
-		} catch (Exception e) {
-			e.printStackTrace();
+	private static BaseComponent[] getBaseComponents(String language, Object[] message, ChatColor forceColor, int list) {
+		List<BaseComponent> components = new ArrayList<BaseComponent>();
+		for (Object msg : message) {
+			if (msg instanceof Object[]) components.addAll(Arrays.asList(getBaseComponents(language, (Object[]) msg, forceColor, list)));
+			else {
+				BaseComponent component;
+				if (msg instanceof BaseComponent) component = (BaseComponent) msg;
+				else if (msg instanceof TranslatableMessage) {
+					String s = ((TranslatableMessage) msg).getMessage(language);
+					if (list >= 0) s = s.replaceAll("%list%", ""+list);
+					component = new TextComponent(s);
+				} else component = new TextComponent(msg.toString());
+				if (forceColor != null) component.setColor(forceColor);
+				components.add(component);
+			}
 		}
+		return components.toArray(new BaseComponent[components.size()]);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -479,16 +509,10 @@ public final class Reflector {
 	 * @throws NoSuchMethodException if a constructor with the specified name is not found
 	 * @throws SecurityException
 	 */
-	public static Constructor getConstructor(Class<?> clazz, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
-		ClassCache key = new ClassCache(clazz, null);
-		if(constructors.containsKey(key)) return constructors.get(key);
-		else {
-			Constructor result = null;
-			result = clazz.getDeclaredConstructor(parameterTypes);
-			result.setAccessible(true);
-			constructors.put(key, result);
-			return result;
-		}
+	public static @NotNull Constructor getConstructor(@NotNull Class<?> clazz, @NotNull Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+		Constructor result = clazz.getDeclaredConstructor(parameterTypes);
+		result.setAccessible(true);
+		return result;
 	}
 	
 	/** Gets a method.
@@ -499,16 +523,10 @@ public final class Reflector {
 	 * @throws NoSuchMethodException if a method with the specified name is not found
 	 * @throws SecurityException
 	 */
-	public static Method getMethod(Class<?> clazz, String name, Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
-		ClassCache key = new ClassCache(clazz, name);
-		if(methods.containsKey(key)) return methods.get(key);
-		else {
-			Method result = null;
-			result = clazz.getDeclaredMethod(name, parameterTypes);
-			result.setAccessible(true);
-			methods.put(key, result);
-			return result;
-		}
+	public static @NotNull Method getMethod(@NotNull Class<?> clazz, @NotNull String name, @NotNull Class<?>... parameterTypes) throws NoSuchMethodException, SecurityException {
+		Method result = clazz.getDeclaredMethod(name, parameterTypes);
+		result.setAccessible(true);
+		return result;
 	}
 	
 	/** Gets a field.
@@ -518,16 +536,10 @@ public final class Reflector {
 	 * @throws NoSuchFieldException if a field with the specified name is not found
 	 * @throws SecurityException
 	 */
-	public static Field getField(Class<?> clazz, String name) throws NoSuchFieldException, SecurityException {
-		ClassCache key = new ClassCache(clazz, name);
-		if(fields.containsKey(key)) return fields.get(key);
-		else {
-			Field result = null;
-			result = clazz.getDeclaredField(name);
-			result.setAccessible(true);
-			fields.put(key, result);
-			return result;
-		}
+	public static @NotNull Field getField(@NotNull Class<?> clazz, @NotNull String name) throws NoSuchFieldException, SecurityException {
+		Field result = clazz.getDeclaredField(name);
+		result.setAccessible(true);
+		return result;
 	}
 	
 	/** Gets a class in the package net.minecraft.server.v[version].
@@ -535,13 +547,8 @@ public final class Reflector {
 	 * @return the Class object for the class with the specified name
 	 * @throws ClassNotFoundException if the class cannot be located
 	 */
-	public static Class<?> getNmsClass(final String className) throws ClassNotFoundException {
-		if (nmsClasses.containsKey(className)) return nmsClasses.get(className);
-		else {
-			Class<?> clazz = Class.forName(nmsPackageName + "." + className);
-			nmsClasses.put(className, clazz);
-			return clazz;
-		}
+	public static @NotNull Class<?> getNmsClass(@NotNull final String className) throws ClassNotFoundException {
+		return Class.forName(nmsPackageName + "." + className);
 	}
 	
 	/** Gets a class in the package org.bukkit.craftbukkit.v[version].
@@ -549,13 +556,8 @@ public final class Reflector {
 	 * @return the Class object for the class with the specified name
 	 * @throws ClassNotFoundException if the class cannot be located
 	 */
-	public static Class<?> getObcClass(final String className) throws ClassNotFoundException {
-		if (obcClasses.containsKey(className)) return obcClasses.get(className);
-		else {
-			Class<?> clazz = Class.forName(obcPackageName + "." + className);
-			obcClasses.put(className, clazz);
-			return clazz;
-		}
+	public static @NotNull Class<?> getObcClass(@NotNull final String className) throws ClassNotFoundException {
+		return Class.forName(obcPackageName + "." + className);
 	}
 
 	/**
@@ -564,7 +566,7 @@ public final class Reflector {
 	 * @return the ArgumentType<?>
 	 * @see getNMSArgumentInstance
 	 */
-	public static ArgumentType<?> getNmsArgumentInstance(String nmsClassName) {
+	public static @NotNull ArgumentType<?> getNmsArgumentInstance(@NotNull String nmsClassName) {
 		return getNmsArgumentInstance(nmsClassName, "a");		
 	}
 	
@@ -574,7 +576,7 @@ public final class Reflector {
 	 * @param methodName the name of the method
 	 * @return the ArgumentType<?>
 	 */
-	public static ArgumentType<?> getNmsArgumentInstance(String nmsClassName, String methodName) {
+	public static @NotNull ArgumentType<?> getNmsArgumentInstance(@NotNull String nmsClassName, @NotNull String methodName) {
 		try {
 			Class clazz = getNmsClass(nmsClassName);
 			Method method;

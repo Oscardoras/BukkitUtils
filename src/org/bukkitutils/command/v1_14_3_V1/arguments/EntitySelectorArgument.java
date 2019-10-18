@@ -11,11 +11,12 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.sun.istack.internal.NotNull;
 
-/** Represents an entity selector argument for a Mojang Brigadier command */
+/** Represents an entity selector argument for a Mojang Brigadier command. */
 public class EntitySelectorArgument extends Argument<Object> {
 	
-	/** Represents an an entity selector type */
+	/** Represents an entity selector type. */
 	public enum EntitySelector {
 		/** A single entity. Returns an Entity. */
 		ONE_ENTITY("a"),
@@ -43,10 +44,10 @@ public class EntitySelectorArgument extends Argument<Object> {
 	protected final EntitySelector selector;
 	
 	/**
-	 * Represents an entity selector argument for a Mojang Brigadier command
+	 * Represents an entity selector argument for a Mojang Brigadier command.
 	 * @param selector the entity selector type for this argument
 	 */
-	public EntitySelectorArgument(EntitySelector selector) {
+	public EntitySelectorArgument(@NotNull EntitySelector selector) {
 		super(Reflector.getNmsArgumentInstance("ArgumentEntity", selector.getNmsFunction()));
 		
 		this.selector = selector;
@@ -56,7 +57,7 @@ public class EntitySelectorArgument extends Argument<Object> {
 	 * Gets the entity selector type for this argument.
 	 * @return the entity selector type for this argument
 	 */
-	public EntitySelector getEntitySelector() {
+	public @NotNull EntitySelector getEntitySelector() {
 		return selector;
 	}
 	

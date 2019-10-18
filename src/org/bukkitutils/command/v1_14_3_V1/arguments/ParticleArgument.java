@@ -8,10 +8,10 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents a particle argument for a Mojang Brigadier command */
+/** Represents a particle argument for a Mojang Brigadier command. */
 public class ParticleArgument extends Argument<Particle> {
 	
-	/** Represents a particle argument for a Mojang Brigadier command */
+	/** Represents a particle argument for a Mojang Brigadier command. */
 	public ParticleArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentParticle"));
 	}

@@ -8,10 +8,10 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents a potion effect argument for a Mojang Brigadier command */
+/** Represents a potion effect argument for a Mojang Brigadier command. */
 public class PotionEffectArgument extends Argument<PotionEffectType> {
 	
-	/** Represents a potion effect argument for a Mojang Brigadier command */
+	/** Represents a potion effect argument for a Mojang Brigadier command. */
 	public PotionEffectArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentMobEffect"));
 	}

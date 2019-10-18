@@ -8,10 +8,10 @@ import org.bukkitutils.command.v1_14_3_V1.Reflector;
 
 import com.mojang.brigadier.context.CommandContext;
 
-/** Represents a chat color argument for a Mojang Brigadier command */
+/** Represents a chat color argument for a Mojang Brigadier command. */
 public class ChatColorArgument extends Argument<ChatColor> {
 	
-	/** Represents a chat color argument for a Mojang Brigadier command */
+	/** Represents a chat color argument for a Mojang Brigadier command. */
 	public ChatColorArgument() {
 		super(Reflector.getNmsArgumentInstance("ArgumentChatFormat"));
 	}

@@ -13,7 +13,9 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 
-/** An optimized player reloading event listener */
+import com.sun.istack.internal.NotNull;
+
+/** An optimized player reloading event listener. */
 public final class PlayerReloader implements Listener {
 	
 	@FunctionalInterface
@@ -21,9 +23,10 @@ public final class PlayerReloader implements Listener {
 		/**
 		 * The code to run when the player is reloaded.
 		 * @param player the player to reload
+		 * @param location the new player location
 		 * @param type the reloading type
 		 */
-		void onReload(Player player, Location location, Type type);
+		void onReload(@NotNull Player player, @NotNull Location location, @NotNull Type type);
 	}
 	
 	/** The reloading type */
@@ -51,12 +54,12 @@ public final class PlayerReloader implements Listener {
     }
 	
 	/**
-	 * Registers a new player reloader
+	 * Registers a new player reloader.
 	 * @param plugin the plugin
-	 * @param runable the PlayerReloaderRunnable to run when the player is reloaded is performed
+	 * @param runable the runnable to run when the player is reloaded
 	 * @param ticks the clock delay. Set 0 to disable the clock
 	 */
-	public static PlayerReloaderRunnable register(Plugin plugin, PlayerReloaderRunnable runnable, long ticks) {
+	public static @NotNull PlayerReloaderRunnable register(@NotNull Plugin plugin, @NotNull PlayerReloaderRunnable runnable, long ticks) {
     	new PlayerReloader(plugin, runnable, ticks);
     	return runnable;
     }
@@ -79,7 +82,7 @@ public final class PlayerReloader implements Listener {
     }
     
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void on(PlayerMoveEvent e) {
+    private void on(PlayerMoveEvent e) {
     	if (!e.isCancelled()) {
 	    	Location from = e.getFrom();
 	    	Location to = e.getTo();
@@ -90,19 +93,19 @@ public final class PlayerReloader implements Listener {
     }
     
     @EventHandler(priority = EventPriority.HIGHEST)
-	public void on(PlayerRespawnEvent e) {
+    private void on(PlayerRespawnEvent e) {
     	runnable.onReload(e.getPlayer(), e.getRespawnLocation(), Type.RESPAWN);
 	}
     
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void on(PlayerTeleportEvent e) {
+    private void on(PlayerTeleportEvent e) {
     	if (!e.isCancelled()) {
     		runnable.onReload(e.getPlayer(), e.getTo(), Type.TELEPORT);
     	}
     }
     
     @EventHandler(priority = EventPriority.HIGHEST)
-    public void on(PlayerQuitEvent e) {
+    private void on(PlayerQuitEvent e) {
     	Player player = e.getPlayer();
     	runnable.onReload(player, player.getLocation(), Type.QUIT);
     }
