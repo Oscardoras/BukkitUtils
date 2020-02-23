@@ -1,7 +1,9 @@
 package org.bukkitutils.command.v1_14_3_V1;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
@@ -78,21 +80,22 @@ public final class CommandRegister {
 		 * @param listMessage an array, which can contain BaseComponent, TranslatableMessage and any other type of object, to send if the list is not empty
 		 * @param emptyMessage an array, which can contain BaseComponent, TranslatableMessage and any other type of object, to send if the list is empty
 		 */
-		public void sendListMessage(@NotNull Collection<String> list, @NotNull Object[] listMessage, @NotNull Object[] emptyMessage) {
+		public void sendListMessage(@NotNull Collection<? extends Object> list, @NotNull Object[] listMessage, @NotNull Object[] emptyMessage) {
 			if (!list.isEmpty()) {
 				if (listMessage != null) Reflector.sendMessage(source, sender, listMessage, list.size());
 				if (!list.isEmpty()) {
-					String string = "";
+					List<Object> objects = new ArrayList<Object>();
 					int i = 0;
-					for (String element : list) {
+					for (Object element : list) {
 						if (i == 0) {
-							string += element;
+							objects.add(element);
 						} else {
-							string += ", " + element;
+							objects.add(", ");
+							objects.add(element);
 						}
 						i++;
 					}
-					Reflector.sendMessage(source, sender, new Object[] {string}, -1);
+					Reflector.sendMessage(source, sender, objects.toArray(), -1);
 				}
 			} else Reflector.sendMessage(source, sender, new Object[] {emptyMessage}, -1);
 		}
