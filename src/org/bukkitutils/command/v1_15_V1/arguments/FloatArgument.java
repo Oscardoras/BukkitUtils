@@ -1,6 +1,6 @@
-package org.bukkitutils.command.v1_14_3_V1.arguments;
+package org.bukkitutils.command.v1_15_V1.arguments;
 
-import org.bukkitutils.command.v1_14_3_V1.Argument;
+import org.bukkitutils.command.v1_15_V1.Argument;
 
 import com.mojang.brigadier.arguments.FloatArgumentType;
 import com.mojang.brigadier.context.CommandContext;

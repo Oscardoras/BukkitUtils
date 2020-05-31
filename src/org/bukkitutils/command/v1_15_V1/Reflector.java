@@ -1,4 +1,4 @@
-package org.bukkitutils.command.v1_14_3_V1;
+package org.bukkitutils.command.v1_15_V1;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
@@ -22,12 +22,12 @@ import org.bukkit.command.SimpleCommandMap;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Player;
 import org.bukkit.permissions.Permission;
-import org.bukkitutils.command.v1_14_3_V1.Argument.SuggestedCommand;
-import org.bukkitutils.command.v1_14_3_V1.Argument.SuggestionsProvider;
-import org.bukkitutils.command.v1_14_3_V1.CommandRegister.CommandExecutorType;
-import org.bukkitutils.command.v1_14_3_V1.CommandRegister.CommandRunnable;
-import org.bukkitutils.command.v1_14_3_V1.CommandRegister.PerformedCommand;
-import org.bukkitutils.command.v1_14_3_V1.arguments.GreedyStringArgument;
+import org.bukkitutils.command.v1_15_V1.Argument.SuggestedCommand;
+import org.bukkitutils.command.v1_15_V1.Argument.SuggestionsProvider;
+import org.bukkitutils.command.v1_15_V1.CommandRegister.CommandExecutorType;
+import org.bukkitutils.command.v1_15_V1.CommandRegister.CommandRunnable;
+import org.bukkitutils.command.v1_15_V1.CommandRegister.PerformedCommand;
+import org.bukkitutils.command.v1_15_V1.arguments.GreedyStringArgument;
 import org.bukkitutils.io.TranslatableMessage;
 
 import com.mojang.brigadier.Command;
@@ -114,14 +114,12 @@ public final class Reflector {
 				if (executorType == CommandExecutorType.PLAYER) {
 					if (!(executor instanceof Player)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.player");
-						message.setColor(ChatColor.RED);
 						sendFailureMessage(source, sender, new BaseComponent[] {message});
 						return 0;
 					}
 				} else if (executorType == CommandExecutorType.ENTITY) {
 					if (!(executor instanceof Entity)) {
 						TranslatableComponent message = new TranslatableComponent("permissions.requires.entity");
-						message.setColor(ChatColor.RED);
 						sendFailureMessage(source, sender, new BaseComponent[] {message});
 						return 0;
 					}

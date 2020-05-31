@@ -1,4 +1,4 @@
-package org.bukkitutils.command.v1_14_3_V1;
+package org.bukkitutils.command.v1_15_V1;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -8,7 +8,7 @@ import java.util.List;
 import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.permissions.Permission;
-import org.bukkitutils.command.v1_14_3_V1.Argument.SuggestedCommand;
+import org.bukkitutils.command.v1_15_V1.Argument.SuggestedCommand;
 
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.sun.istack.internal.NotNull;

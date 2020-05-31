@@ -1,4 +1,4 @@
-package org.bukkitutils.command.v1_14_3_V1;
+package org.bukkitutils.command.v1_15_V1;
 
 import java.util.Collection;
 

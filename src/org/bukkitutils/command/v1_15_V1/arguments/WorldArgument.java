@@ -1,13 +1,14 @@
-package org.bukkitutils.command.v1_14_3_V1.arguments;
+package org.bukkitutils.command.v1_15_V1.arguments;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.World;
-import org.bukkitutils.command.v1_14_3_V1.CustomArgument;
+import org.bukkitutils.command.v1_15_V1.CustomArgument;
 import org.bukkitutils.io.TranslatableMessage;
 
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.sun.istack.internal.NotNull;
 
 /** Represents a world argument for a Mojang Brigadier command. */
@@ -33,15 +34,15 @@ public class WorldArgument extends CustomArgument<World> {
 	public WorldArgument() {
 		this(new TranslatableMessage(null, "world.does_not_exist") {
 			public String getMessage(String language, String... args) {
-				return "§cThe world '" + args[0] + "' was not found";
+				return "The world '" + args[0] + "' was not found";
 			}
 		});
 	}
 	
 	@Override
-	protected World parse(String arg, SuggestedCommand cmd) throws CustomArgumentException {
+	protected World parse(String arg, SuggestedCommand cmd) throws CommandSyntaxException {
 		World world = Bukkit.getWorld(arg);
-		if (world == null) throw new CustomArgumentException(error.getMessage(cmd.getLanguage(), arg));
+		if (world == null) throw getCustomException(error.getMessage(cmd.getLanguage(), arg));
 		return world;
 	}
 	

@@ -1,11 +1,11 @@
-package org.bukkitutils.command.v1_14_3_V1.arguments;
+package org.bukkitutils.command.v1_15_V1.arguments;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkitutils.command.v1_14_3_V1.CustomArgument;
+import org.bukkitutils.command.v1_15_V1.CustomArgument;
 
 /** Represents an offline player argument for a Mojang Brigadier command. */
 public class OfflinePlayerArgument extends CustomArgument<OfflinePlayer> {
