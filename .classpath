@@ -2,9 +2,9 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="/home/oscar/Plugins/lib/brigadier.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/oscar/Plugins/lib/brigadier.jar"/>
 	<classpathentry exported="true" kind="lib" path="/home/oscar/Plugins/lib/chat-API.zip"/>
-	<classpathentry kind="lib" path="/home/oscar/Plugins/lib/gson.jar"/>
+	<classpathentry exported="true" kind="lib" path="/home/oscar/Plugins/lib/gson.jar"/>
 	<classpathentry exported="true" kind="lib" path="/home/oscar/Plugins/lib/Spigot-API.jar">
 		<attributes>
 			<attribute name="javadoc_location" value="https://hub.spigotmc.org/javadocs/spigot/"/>
