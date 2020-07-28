@@ -11,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.GameRule;
@@ -447,7 +448,7 @@ public final class Reflector {
 							Class<?> ChatSerializer = IChatBaseComponent.getDeclaredClasses()[0];
 							Method a = getMethod(ChatSerializer, "a", String.class);
 							Object object = a.invoke(null, ComponentSerializer.toString(component));
-							getMethod(getNmsClass("ICommandListener"), "sendMessage", IChatBaseComponent).invoke(i.get(source), object);
+							getMethod(getNmsClass("ICommandListener"), "sendMessage", IChatBaseComponent, UUID.class).invoke(i.get(source), object, null);
 						}
 					}
 					
